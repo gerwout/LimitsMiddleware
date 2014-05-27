@@ -64,7 +64,6 @@
     <Compile Include="MaxRequestContentLengthOptions.cs" />
     <Compile Include="MaxUrlLengthOptions.cs" />
     <Compile Include="OptionsBase.cs" />
-    <Compile Include="LimitsMiddlewareExtensions.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringExtension.cs" />

@@ -12,7 +12,7 @@
         System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
         >;
     using BuildFunc = System.Action<
-        System.Collections.Generic.IDictionary<string, object>,
+        //System.Collections.Generic.IDictionary<string, object>,
         System.Func<
             System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
             System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
@@ -316,7 +316,7 @@
         {
             builder.MustNotNull("builder");
 
-            builder(LimitsMiddleware.ConnectionTimeout(options));
+            builder(ConnectionTimeout(options));
             return builder;
         }
 
@@ -355,7 +355,7 @@
         {
             builder.MustNotNull("builder");
 
-            builder(LimitsMiddleware.MaxBandwidth(options));
+            builder(MaxBandwidth(options));
             return builder;
         }
 
@@ -431,7 +431,7 @@
         {
             builder.MustNotNull("builder");
 
-            builder(LimitsMiddleware.MaxQueryStringLength(options));
+            builder(MaxQueryStringLength(options));
             return builder;
         }
 
@@ -468,7 +468,7 @@
         {
             builder.MustNotNull("builder");
 
-            builder(LimitsMiddleware.MaxRequestContentLength(options));
+            builder(MaxRequestContentLength(options));
             return builder;
         }
 
@@ -505,7 +505,7 @@
         {
             builder.MustNotNull("builder");
 
-            builder(LimitsMiddleware.MaxUrlLength(options));
+            builder(MaxUrlLength(options));
             return builder;
         }
     }
