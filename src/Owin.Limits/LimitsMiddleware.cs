@@ -12,11 +12,12 @@
         System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
         >;
     using BuildFunc = System.Action<
-        //System.Collections.Generic.IDictionary<string, object>,
         System.Func<
-            System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
-            System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
-        >>;
+            System.Collections.Generic.IDictionary<string, object>,
+            System.Func<
+                System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
+                System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
+        >>>;
 
     public static class LimitsMiddleware
     {
@@ -315,8 +316,7 @@
         public static BuildFunc ConnectionTimeout(this BuildFunc builder, ConnectionTimeoutOptions options)
         {
             builder.MustNotNull("builder");
-
-            builder(ConnectionTimeout(options));
+            builder(_ => ConnectionTimeout(options));
             return builder;
         }
 
@@ -355,7 +355,7 @@
         {
             builder.MustNotNull("builder");
 
-            builder(MaxBandwidth(options));
+            builder(_ => MaxBandwidth(options));
             return builder;
         }
 
@@ -394,7 +394,7 @@
         {
             builder.MustNotNull("builder");
 
-            builder(MaxConcurrentRequests(options));
+            builder(_ =>MaxConcurrentRequests(options));
             return builder;
         }
 
@@ -431,7 +431,7 @@
         {
             builder.MustNotNull("builder");
 
-            builder(MaxQueryStringLength(options));
+            builder(_ => MaxQueryStringLength(options));
             return builder;
         }
 
@@ -468,7 +468,7 @@
         {
             builder.MustNotNull("builder");
 
-            builder(MaxRequestContentLength(options));
+            builder(_ => MaxRequestContentLength(options));
             return builder;
         }
 
@@ -505,7 +505,7 @@
         {
             builder.MustNotNull("builder");
 
-            builder(MaxUrlLength(options));
+            builder(_ => MaxUrlLength(options));
             return builder;
         }
     }

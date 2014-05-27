@@ -43,19 +43,20 @@
         private static HttpClient CreateHttpClient(Func<TimeSpan> getConnectionTimeout)
         {
             return TestServer.Create(builder => builder
-                .Use().ConnectionTimeout(getConnectionTimeout)
-                .Use(builder)
-                .Use(async (context, _) =>
-                {
-                    var buffer = new byte[1024];
-                    await context.Request.Body.ReadAsync(buffer, 0, buffer.Length);
-                    byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();
-                    context.Response.StatusCode = 200;
-                    context.Response.ReasonPhrase = "OK";
-                    context.Response.ContentLength = bytes.LongLength;
-                    context.Response.ContentType = "application/octet-stream";
-                    await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
-                })).HttpClient;
+                .ToBuildFunc()
+                    .ConnectionTimeout(getConnectionTimeout)
+                .ToAppBuilder(builder)
+                    .Use(async (context, _) =>
+                    {
+                        var buffer = new byte[1024];
+                        await context.Request.Body.ReadAsync(buffer, 0, buffer.Length);
+                        byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();
+                        context.Response.StatusCode = 200;
+                        context.Response.ReasonPhrase = "OK";
+                        context.Response.ContentLength = bytes.LongLength;
+                        context.Response.ContentType = "application/octet-stream";
+                        await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
+                    })).HttpClient;
         }
 
         private static async Task ThrowsAsync<TException>(Func<Task> func)

@@ -37,17 +37,18 @@
         private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond)
         {
             return TestServer.Create(builder => builder
-                .Use().MaxBandwidth(getMaxBytesPerSecond)
-                .Use(builder)
-                .Use(async (context, _) =>
-                {
-                    byte[] bytes = Enumerable.Repeat((byte) 0x1, 3).ToArray();
-                    context.Response.StatusCode = 200;
-                    context.Response.ReasonPhrase = "OK";
-                    context.Response.ContentLength = bytes.LongLength;
-                    context.Response.ContentType = "application/octet-stream";
-                    await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
-                })).HttpClient;
+                .ToBuildFunc()
+                    .MaxBandwidth(getMaxBytesPerSecond)
+                .ToAppBuilder(builder)
+                    .Use(async (context, _) =>
+                    {
+                        byte[] bytes = Enumerable.Repeat((byte) 0x1, 3).ToArray();
+                        context.Response.StatusCode = 200;
+                        context.Response.ReasonPhrase = "OK";
+                        context.Response.ContentLength = bytes.LongLength;
+                        context.Response.ContentType = "application/octet-stream";
+                        await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
+                    })).HttpClient;
         }
     }
 }

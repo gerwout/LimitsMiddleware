@@ -44,11 +44,11 @@
         private static HttpClient CreateClient(int length)
         {
             return TestServer.Create(builder => builder
-                .Use().MaxUrlLength(new MaxUrlLengthOptions(length)
+                .ToBuildFunc().MaxUrlLength(new MaxUrlLengthOptions(length)
                 {
                     LimitReachedReasonPhrase = code => "custom phrase"
                 })
-                .Use(builder)
+                .ToAppBuilder(builder)
                 .Use((context, next) =>
                 {
                     context.Response.StatusCode = 200;

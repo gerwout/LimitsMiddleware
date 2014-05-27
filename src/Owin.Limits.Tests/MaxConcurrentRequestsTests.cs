@@ -53,21 +53,22 @@
         private static HttpClient CreateHttpClient(int maxConcurrentRequests)
         {
             return TestServer.Create(builder => builder
-                .Use().MaxBandwidth(1)
-                .MaxConcurrentRequests(new MaxConcurrentRequestOptions(maxConcurrentRequests)
-                {
-                    LimitReachedReasonPhrase = code => "custom phrase"
-                })
-                .Use(builder)
-                .Use(async (context, _) =>
-                {
-                    byte[] bytes = Enumerable.Repeat((byte) 0x1, 2).ToArray();
-                    context.Response.StatusCode = 200;
-                    context.Response.ReasonPhrase = "OK";
-                    context.Response.ContentLength = bytes.LongLength;
-                    context.Response.ContentType = "application/octet-stream";
-                    await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
-                })).HttpClient;
+                .ToBuildFunc()
+                    .MaxBandwidth(1)
+                    .MaxConcurrentRequests(new MaxConcurrentRequestOptions(maxConcurrentRequests)
+                    {
+                        LimitReachedReasonPhrase = code => "custom phrase"
+                    })
+                .ToAppBuilder(builder)
+                    .Use(async (context, _) =>
+                    {
+                        byte[] bytes = Enumerable.Repeat((byte) 0x1, 2).ToArray();
+                        context.Response.StatusCode = 200;
+                        context.Response.ReasonPhrase = "OK";
+                        context.Response.ContentLength = bytes.LongLength;
+                        context.Response.ContentType = "application/octet-stream";
+                        await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
+                    })).HttpClient;
         }
     }
 }

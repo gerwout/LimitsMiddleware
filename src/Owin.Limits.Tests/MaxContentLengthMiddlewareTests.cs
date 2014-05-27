@@ -158,18 +158,19 @@
         private static RequestBuilder CreateRequest(int maxContentLength)
         {
             TestServer server = TestServer.Create(builder => builder
-                .Use().MaxRequestContentLength(new MaxRequestContentLengthOptions(maxContentLength)
-                {
-                    LimitReachedReasonPhrase = code => "custom phrase"
-                })
-                .Use(builder)
-                .Use(async (context, _) =>
-                {
-                    await new StreamReader(context.Request.Body).ReadToEndAsync();
-                    await new StreamWriter(context.Response.Body).WriteAsync("Lorem ipsum");
-                    context.Response.StatusCode = 200;
-                    context.Response.ReasonPhrase = "OK";
-                }));
+                .ToBuildFunc()
+                    .MaxRequestContentLength(new MaxRequestContentLengthOptions(maxContentLength)
+                    {
+                        LimitReachedReasonPhrase = code => "custom phrase"
+                    })
+                .ToAppBuilder(builder)
+                    .Use(async (context, _) =>
+                    {
+                        await new StreamReader(context.Request.Body).ReadToEndAsync();
+                        await new StreamWriter(context.Response.Body).WriteAsync("Lorem ipsum");
+                        context.Response.StatusCode = 200;
+                        context.Response.ReasonPhrase = "OK";
+                    }));
             RequestBuilder request = server.CreateRequest("http://example.com");
 
             return request;
