@@ -6,44 +6,19 @@
     using System.Threading.Tasks;
     using Microsoft.Owin;
 
-    using AppFunc = System.Func
-        <
-            System.Collections.Generic.IDictionary<string, object>,
-            System.Threading.Tasks.Task
+    using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
+    using MidFunc = System.Func<
+        System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
+        System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
         >;
+    using BuildFunc = System.Action<
+        System.Collections.Generic.IDictionary<string, object>,
+        System.Func<
+            System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
+            System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
+        >>;
 
-    using MidFunc = System.Func
-        <
-            System.Func
-            <
-                System.Collections.Generic.IDictionary<string, object>,
-                System.Threading.Tasks.Task
-            >,
-            System.Func
-            <
-                System.Collections.Generic.IDictionary<string, object>,
-                System.Threading.Tasks.Task
-            >
-        >;
-
-    using BuildFunc = System.Action
-        <
-            System.Func
-            <
-                System.Func
-                <
-                    System.Collections.Generic.IDictionary<string, object>,
-                    System.Threading.Tasks.Task
-                >,
-                System.Func
-                <
-                    System.Collections.Generic.IDictionary<string, object>,
-                    System.Threading.Tasks.Task
-                >
-            >
-        >;
-
-    public static partial class LimitsMiddleware
+    public static class LimitsMiddleware
     {
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
