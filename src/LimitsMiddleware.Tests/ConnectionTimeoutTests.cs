@@ -8,6 +8,7 @@
     using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
+    using LimitsMiddleware;
     using Microsoft.Owin.Testing;
     using Xunit;
 

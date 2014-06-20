@@ -9,7 +9,7 @@
 // ReSharper disable InconsistentNaming
 
 // ReSharper disable once CheckNamespace
-namespace Owin.Limits.Annotations
+namespace LimitsMiddleware.Properties
 {
     using System;
 

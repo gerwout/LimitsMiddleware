@@ -1,4 +1,4 @@
-﻿namespace Owin.Limits
+﻿namespace LimitsMiddleware
 {
     using System;
 

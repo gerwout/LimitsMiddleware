@@ -1,4 +1,4 @@
-namespace Owin.Limits
+namespace LimitsMiddleware
 {
     /// <summary>
     /// Base options class

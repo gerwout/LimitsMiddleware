@@ -1,6 +1,5 @@
-﻿namespace Owin.Limits
+﻿namespace LimitsMiddleware
 {
-    using System;
     using System.Diagnostics;
 
     internal static class TracerActionExtensions

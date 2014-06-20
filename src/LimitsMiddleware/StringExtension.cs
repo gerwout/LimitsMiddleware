@@ -1,5 +1,5 @@
 // ReSharper disable once CheckNamespace
-namespace System
+namespace LimitsMiddleware
 {
     internal static class StringExtension
     {

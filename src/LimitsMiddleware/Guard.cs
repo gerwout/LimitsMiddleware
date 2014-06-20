@@ -1,6 +1,8 @@
 ﻿// ReSharper disable once CheckNamespace
-namespace System
+namespace LimitsMiddleware
 {
+    using System;
+
     internal static class Guard
     {
         internal static void MustNotNull(this object argument, string name)
