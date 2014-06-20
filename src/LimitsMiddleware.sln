@@ -1,4 +1,4 @@
-﻿
+
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
@@ -8,9 +8,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		SharedAssemblyInfo.cs = SharedAssemblyInfo.cs
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Owin.Limits", "Owin.Limits\Owin.Limits.csproj", "{757A5ABF-F560-416D-8494-C7A2C6F8E1EF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware", "LimitsMiddleware\LimitsMiddleware.csproj", "{757A5ABF-F560-416D-8494-C7A2C6F8E1EF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Owin.Limits.Tests", "Owin.Limits.Tests\Owin.Limits.Tests.csproj", "{2C2D78F6-27ED-4777-9E1A-476F9816E344}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.Tests", "LimitsMiddleware.Tests\LimitsMiddleware.Tests.csproj", "{2C2D78F6-27ED-4777-9E1A-476F9816E344}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
