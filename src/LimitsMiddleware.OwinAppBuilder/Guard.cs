@@ -1,4 +1,4 @@
-﻿namespace LimitsMiddleware.OwinAppBuilder
+﻿namespace Owin
 {
     using System;
 
