@@ -15,6 +15,9 @@
                 System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
         >>>;
 
+    /// <summary>
+    /// Represents a set of extension methods around <see cref="IAppBuilder"/> that expose limits middleware.
+    /// </summary>
     public static class AppBuilderExtensions
     {
         /// <summary>
