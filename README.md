@@ -16,11 +16,11 @@ OWIN middleware to apply limits to an OWIN pipeline:
 
 There are two nuget packages. The main one is pure owin and this has no dependencies.
 
-`install-package StatusCodeHandlersMiddleware`
+`install-package LimitsMiddleware`
 
 The second package provides integration with IAppBuilder, which is deprecated but provided here for legacy and compatability reasons.
 
-`install-package StatusCodeHandlersMiddleware.OwinAppBuilder`
+`install-package LimitsMiddleware.OwinAppBuilder`
 
 An asp.net vNext builder integration package will be forthcoming.
 
