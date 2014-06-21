@@ -1,4 +1,4 @@
-﻿namespace Owin.Limits
+﻿namespace LimitsMiddleware
 {
     using System;
     using System.Diagnostics;
@@ -6,8 +6,8 @@
     using System.Net.Http;
     using System.Threading.Tasks;
     using FluentAssertions;
-    using LimitsMiddleware;
     using Microsoft.Owin.Testing;
+    using Owin;
     using Xunit;
 
     public class MaxBandwidthTests

@@ -1,4 +1,4 @@
-﻿namespace Owin.Limits
+﻿namespace LimitsMiddleware
 {
     using System;
     using System.IO;
@@ -8,8 +8,8 @@
     using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
-    using LimitsMiddleware;
     using Microsoft.Owin.Testing;
+    using Owin;
     using Xunit;
 
     public class ConnectionTimeoutTests
