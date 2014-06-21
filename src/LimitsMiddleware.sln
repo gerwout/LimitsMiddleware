@@ -13,6 +13,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.Tests", "L
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.OwinAppBuilder", "LimitsMiddleware.OwinAppBuilder\LimitsMiddleware.OwinAppBuilder.csproj", "{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{444E84C1-6019-434C-B244-E2FE8B0EC6DF}"
+	ProjectSection(SolutionItems) = preProject
+		.nuget\packages.config = .nuget\packages.config
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
