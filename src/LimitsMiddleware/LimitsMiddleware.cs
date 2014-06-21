@@ -28,8 +28,35 @@
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
         /// write activity on the response body stream.
         /// </summary>
+        /// <param name="timeout">The timeout.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc ConnectionTimeout(TimeSpan timeout)
+        {
+            timeout.MustNotNull("options");
+
+            return ConnectionTimeout(() => timeout);
+        }
+
+        /// <summary>
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
+        /// </summary>
+        /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
+        /// to supply different values at runtime.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc ConnectionTimeout(Func<TimeSpan> getTimeout)
+        {
+            getTimeout.MustNotNull("getTimeout");
+
+            return ConnectionTimeout(new ConnectionTimeoutOptions(getTimeout));
+        }
+
+        /// <summary>
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
+        /// </summary>
         /// <param name="options">The connection timeout options.</param>
-        /// <returns>The middleware delegate.</returns>
+        /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc ConnectionTimeout(ConnectionTimeoutOptions options)
         {
             options.MustNotNull("options");
@@ -96,8 +123,30 @@
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
+        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
+        /// number to specify infinite bandwidth.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxBandwidth(int maxBytesPerSecond)
+        {
+            return MaxBandwidth(() => maxBytesPerSecond);
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxBandwidth(Func<int> getMaxBytesPerSecond)
+        {
+            return MaxBandwidth(new MaxBandwidthOptions(getMaxBytesPerSecond));
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
         /// <param name="options">The max bandwidth options.</param>
-        /// <returns>The middleware delegate.</returns>
+        /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxBandwidth(MaxBandwidthOptions options)
         {
             options.MustNotNull("options");
@@ -166,8 +215,30 @@
         /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>
+        /// <param name="maxConcurrentRequests">The maximum number of concurrent requests. Use 0 or a negative
+        /// number to specify unlimited number of concurrent requests.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxConcurrentRequests(int maxConcurrentRequests)
+        {
+            return MaxConcurrentRequests(() => maxConcurrentRequests);
+        }
+
+        /// <summary>
+        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
+        /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxConcurrentRequests(Func<int> getMaxConcurrentRequests)
+        {
+            return MaxConcurrentRequests(new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
+        }
+
+        /// <summary>
+        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
+        /// </summary>
         /// <param name="options">The max concurrent request options.</param>
-        /// <returns>The middleware delegate.</returns>
+        /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxConcurrentRequests(MaxConcurrentRequestOptions options)
         {
             options.MustNotNull("options");
@@ -246,10 +317,30 @@
         }
 
         /// <summary>
+        /// Limits the length of the query string.
+        /// </summary>
+        /// <param name="maxQueryStringLength">Maximum length of the query string.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxQueryStringLength(int maxQueryStringLength)
+        {
+            return MaxQueryStringLength(() => maxQueryStringLength);
+        }
+
+        /// <summary>
+        /// Limits the length of the query string.
+        /// </summary>
+        /// <param name="getMaxQueryStringLength">A delegate to get the maximum query string length.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxQueryStringLength(Func<int> getMaxQueryStringLength)
+        {
+            return MaxQueryStringLength(new MaxQueryStringLengthOptions(getMaxQueryStringLength));
+        }
+
+        /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>
         /// <param name="options">The max concurrent request options.</param>
-        /// <returns>The middleware delegate.</returns>
+        /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxQueryStringLength(MaxQueryStringLengthOptions options)
         {
             options.MustNotNull("options");
@@ -324,8 +415,28 @@
         /// <summary>
         /// Limits the length of the request content.
         /// </summary>
+        /// <param name="maxContentLength">Maximum length of the content.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxRequestContentLength(int maxContentLength)
+        {
+            return MaxRequestContentLength(() => maxContentLength);
+        }
+
+        /// <summary>
+        /// Limits the length of the request content.
+        /// </summary>
+        /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxRequestContentLength(Func<int> getMaxContentLength)
+        {
+            return MaxRequestContentLength(new MaxRequestContentLengthOptions(getMaxContentLength));
+        }
+
+        /// <summary>
+        /// Limits the length of the request content.
+        /// </summary>
         /// <param name="options">The max request content lenght options.</param>
-        /// <returns>The middleware delegate.</returns>
+        /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxRequestContentLength(MaxRequestContentLengthOptions options)
         {
             options.MustNotNull("options");
@@ -431,10 +542,30 @@
         }
 
         /// <summary>
+        /// Limits the length of the URL.
+        /// </summary>
+        /// <param name="maxUrlLength">Maximum length of the URL.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxUrlLength(int maxUrlLength)
+        {
+            return MaxUrlLength(() => maxUrlLength);
+        }
+
+        /// <summary>
+        /// Limits the length of the URL.
+        /// </summary>
+        /// <param name="getMaxUrlLength">A delegate to get the maximum URL length.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxUrlLength(Func<int> getMaxUrlLength)
+        {
+            return MaxUrlLength(new MaxUrlLengthOptions(getMaxUrlLength));
+        }
+
+        /// <summary>
         /// Limits the length of the request content.
         /// </summary>
         /// <param name="options">The max request content lenght options.</param>
-        /// <returns>The middleware delegate.</returns>
+        /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxUrlLength(MaxUrlLengthOptions options)
         {
             options.MustNotNull("options");
