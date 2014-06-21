@@ -12,14 +12,87 @@
         System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
         >;
     using BuildFunc = System.Action<
-        //System.Collections.Generic.IDictionary<string, object>,
         System.Func<
-            System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
-            System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
-        >>;
+            System.Collections.Generic.IDictionary<string, object>,
+            System.Func<
+                System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
+                System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
+        >>>;
 
+    /// <summary>
+    /// Represent a set of middleware functions to apply limits to an OWIN pipeline.
+    /// </summary>
     public static class LimitsMiddleware
     {
+        /// <summary>
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
+        /// </summary>
+        /// <param name="options">The connection timeout options.</param>
+        /// <returns>The middleware delegate.</returns>
+        public static MidFunc ConnectionTimeout(ConnectionTimeoutOptions options)
+        {
+            options.MustNotNull("options");
+
+            return
+                next =>
+                env =>
+                {
+                    var context = new OwinContext(env);
+                    Stream requestBodyStream = context.Request.Body ?? Stream.Null;
+                    Stream responseBodyStream = context.Response.Body;
+
+                    options.Tracer.AsVerbose("Configure timeouts.");
+                    TimeSpan connectionTimeout = options.GetTimeout();
+                    context.Request.Body = new TimeoutStream(requestBodyStream, connectionTimeout, options.Tracer);
+                    context.Response.Body = new TimeoutStream(responseBodyStream, connectionTimeout, options.Tracer);
+
+                    options.Tracer.AsVerbose("Request with configured timeout forwarded.");
+                    return next(env);
+                };
+        }
+
+        /// <summary>
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="timeout">The timeout.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        public static BuildFunc ConnectionTimeout(this BuildFunc builder, TimeSpan timeout)
+        {
+            return ConnectionTimeout(builder, () => timeout);
+        }
+
+        /// <summary>
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
+        /// to supply different values at runtime.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        public static BuildFunc ConnectionTimeout(this BuildFunc builder, Func<TimeSpan> getTimeout)
+        {
+            return ConnectionTimeout(builder, new ConnectionTimeoutOptions(getTimeout));
+        }
+
+        /// <summary>
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="options">The connection timeout options.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        public static BuildFunc ConnectionTimeout(this BuildFunc builder, ConnectionTimeoutOptions options)
+        {
+            builder.MustNotNull("builder");
+
+            builder(_ => ConnectionTimeout(options));
+            return builder;
+        }
+
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
@@ -52,31 +125,42 @@
         }
 
         /// <summary>
-        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
-        /// write activity on the response body stream.
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="options">The connection timeout options.</param>
-        /// <returns>The middleware delegate.</returns>
-        public static MidFunc ConnectionTimeout(ConnectionTimeoutOptions options)
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
+        /// number to specify infinite bandwidth.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        public static BuildFunc MaxBandwidth(this BuildFunc builder, int maxBytesPerSecond)
         {
-            options.MustNotNull("options");
+            return MaxBandwidth(builder, () => maxBytesPerSecond);
+        }
 
-            return
-                next =>
-                env =>
-                {
-                    var context = new OwinContext(env);
-                    Stream requestBodyStream = context.Request.Body ?? Stream.Null;
-                    Stream responseBodyStream = context.Response.Body;
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
+        /// <returns>The builder instance.</returns>
+        public static BuildFunc MaxBandwidth(this BuildFunc builder, Func<int> getMaxBytesPerSecond)
+        {
+            return MaxBandwidth(builder, new MaxBandwidthOptions(getMaxBytesPerSecond));
+        }
 
-                    options.Tracer.AsVerbose("Configure timeouts.");
-                    TimeSpan connectionTimeout = options.GetTimeout();
-                    context.Request.Body = new TimeoutStream(requestBodyStream, connectionTimeout, options.Tracer);
-                    context.Response.Body = new TimeoutStream(responseBodyStream, connectionTimeout, options.Tracer);
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="options">The max bandwith options.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        public static BuildFunc MaxBandwidth(this BuildFunc builder, MaxBandwidthOptions options)
+        {
+            builder.MustNotNull("builder");
 
-                    options.Tracer.AsVerbose("Request with configured timeout forwarded.");
-                    return next(env);
-                };
+            builder(_ => MaxBandwidth(options));
+            return builder;
         }
 
         /// <summary>
@@ -125,6 +209,45 @@
         /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="maxConcurrentRequests">The maximum number of concurrent requests. Use 0 or a negative
+        /// number to specify unlimited number of concurrent requests.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, int maxConcurrentRequests)
+        {
+            return MaxConcurrentRequests(builder, () => maxConcurrentRequests);
+        }
+
+        /// <summary>
+        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
+        /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, Func<int> getMaxConcurrentRequests)
+        {
+            return MaxConcurrentRequests(builder, new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
+        }
+
+        /// <summary>
+        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="options">The max concurrent request options.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, MaxConcurrentRequestOptions options)
+        {
+            builder.MustNotNull("builder");
+
+            builder(_ => MaxConcurrentRequests(options));
+            return builder;
+        }
+
+        /// <summary>
+        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
+        /// </summary>
         /// <param name="options">The max concurrent request options.</param>
         /// <returns>The middleware delegate.</returns>
         public static MidFunc MaxQueryStringLength(MaxQueryStringLengthOptions options)
@@ -159,6 +282,43 @@
                     }
                     await next(env);
                 };
+        }
+
+        /// <summary>
+        /// Limits the length of the query string.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="maxQueryStringLength">Maximum length of the query string.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        public static BuildFunc MaxQueryStringLength(this BuildFunc builder, int maxQueryStringLength)
+        {
+            return MaxQueryStringLength(builder, () => maxQueryStringLength);
+        }
+
+        /// <summary>
+        /// Limits the length of the query string.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMaxQueryStringLength">A delegate to get the maximum query string length.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        public static BuildFunc MaxQueryStringLength(this BuildFunc builder, Func<int> getMaxQueryStringLength)
+        {
+            return MaxQueryStringLength(builder, new MaxQueryStringLengthOptions(getMaxQueryStringLength));
+        }
+
+        /// <summary>
+        /// Limits the length of the query string.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="options">The max querystring length options.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        public static BuildFunc MaxQueryStringLength(this BuildFunc builder, MaxQueryStringLengthOptions options)
+        {
+            builder.MustNotNull("builder");
+
+            builder(_ => MaxQueryStringLength(options));
+            return builder;
         }
 
         /// <summary>
@@ -233,16 +393,41 @@
                 };
         }
 
-        private static bool IsChunkedRequest(IOwinRequest request)
+        /// <summary>
+        /// Limits the length of the request content.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="maxContentLength">Maximum length of the content.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        public static BuildFunc MaxRequestContentLength(this BuildFunc builder, int maxContentLength)
         {
-            string header = request.Headers.Get("Transfer-Encoding");
-            return header != null && header.Equals("chunked", StringComparison.OrdinalIgnoreCase);
+            return MaxRequestContentLength(builder, () => maxContentLength);
         }
 
-        private static void SetResponseStatusCodeAndReasonPhrase(IOwinContext context, int statusCode, MaxRequestContentLengthOptions options)
+        /// <summary>
+        /// Limits the length of the request content.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        public static BuildFunc MaxRequestContentLength(this BuildFunc builder, Func<int> getMaxContentLength)
         {
-            context.Response.StatusCode = statusCode;
-            context.Response.ReasonPhrase = options.LimitReachedReasonPhrase(context.Response.StatusCode);
+            return MaxRequestContentLength(builder, new MaxRequestContentLengthOptions(getMaxContentLength));
+        }
+
+        /// <summary>
+        /// Limits the length of the request content.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="options">The max request content length options.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        public static BuildFunc MaxRequestContentLength(this BuildFunc builder, MaxRequestContentLengthOptions options)
+        {
+            builder.MustNotNull("builder");
+
+            builder(_ => MaxRequestContentLength(options));
+            return builder;
         }
 
         /// <summary>
@@ -280,199 +465,6 @@
         }
 
         /// <summary>
-        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
-        /// write activity on the response body stream.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="timeout">The timeout.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        public static BuildFunc ConnectionTimeout(this BuildFunc builder, TimeSpan timeout)
-        {
-            return ConnectionTimeout(builder, () => timeout);
-        }
-
-        /// <summary>
-        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
-        /// write activity on the response body stream.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
-        /// to supply different values at runtime.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        public static BuildFunc ConnectionTimeout(this BuildFunc builder, Func<TimeSpan> getTimeout)
-        {
-            return ConnectionTimeout(builder, new ConnectionTimeoutOptions(getTimeout));
-        }
-
-        /// <summary>
-        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
-        /// write activity on the response body stream.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The connection timeout options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc ConnectionTimeout(this BuildFunc builder, ConnectionTimeoutOptions options)
-        {
-            builder.MustNotNull("builder");
-
-            builder(ConnectionTimeout(options));
-            return builder;
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
-        /// number to specify infinite bandwidth.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        public static BuildFunc MaxBandwidth(this BuildFunc builder, int maxBytesPerSecond)
-        {
-            return MaxBandwidth(builder, () => maxBytesPerSecond);
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
-        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
-        /// <returns>The builder instance.</returns>
-        public static BuildFunc MaxBandwidth(this BuildFunc builder, Func<int> getMaxBytesPerSecond)
-        {
-            return MaxBandwidth(builder, new MaxBandwidthOptions(getMaxBytesPerSecond));
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The max bandwith options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxBandwidth(this BuildFunc builder, MaxBandwidthOptions options)
-        {
-            builder.MustNotNull("builder");
-
-            builder(MaxBandwidth(options));
-            return builder;
-        }
-
-        /// <summary>
-        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="maxConcurrentRequests">The maximum number of concurrent requests. Use 0 or a negative
-        /// number to specify unlimited number of concurrent requests.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, int maxConcurrentRequests)
-        {
-            return MaxConcurrentRequests(builder, () => maxConcurrentRequests);
-        }
-
-        /// <summary>
-        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
-        /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, Func<int> getMaxConcurrentRequests)
-        {
-            return MaxConcurrentRequests(builder, new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
-        }
-
-        /// <summary>
-        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The max concurrent request options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, MaxConcurrentRequestOptions options)
-        {
-            builder.MustNotNull("builder");
-
-            builder(MaxConcurrentRequests(options));
-            return builder;
-        }
-
-        /// <summary>
-        /// Limits the length of the query string.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="maxQueryStringLength">Maximum length of the query string.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        public static BuildFunc MaxQueryStringLength(this BuildFunc builder, int maxQueryStringLength)
-        {
-            return MaxQueryStringLength(builder, () => maxQueryStringLength);
-        }
-
-        /// <summary>
-        /// Limits the length of the query string.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getMaxQueryStringLength">A delegate to get the maximum query string length.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        public static BuildFunc MaxQueryStringLength(this BuildFunc builder, Func<int> getMaxQueryStringLength)
-        {
-            return MaxQueryStringLength(builder, new MaxQueryStringLengthOptions(getMaxQueryStringLength));
-        }
-
-        /// <summary>
-        /// Limits the length of the query string.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The max querystring length options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxQueryStringLength(this BuildFunc builder, MaxQueryStringLengthOptions options)
-        {
-            builder.MustNotNull("builder");
-
-            builder(MaxQueryStringLength(options));
-            return builder;
-        }
-
-        /// <summary>
-        /// Limits the length of the request content.
-        /// </summary>
-        /// <param name="builder">The <see cref="IAppBuilder"/> instance.</param>
-        /// <param name="maxContentLength">Maximum length of the content.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        public static BuildFunc MaxRequestContentLength(this BuildFunc builder, int maxContentLength)
-        {
-            return MaxRequestContentLength(builder, () => maxContentLength);
-        }
-
-        /// <summary>
-        /// Limits the length of the request content.
-        /// </summary>
-        /// <param name="builder">The <see cref="IAppBuilder"/> instance.</param>
-        /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        public static BuildFunc MaxRequestContentLength(this BuildFunc builder, Func<int> getMaxContentLength)
-        {
-            return MaxRequestContentLength(builder, new MaxRequestContentLengthOptions(getMaxContentLength));
-        }
-
-        /// <summary>
-        /// Limits the length of the request content.
-        /// </summary>
-        /// <param name="builder">The <see cref="IAppBuilder"/> instance.</param>
-        /// <param name="options">The max request content length options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxRequestContentLength(this BuildFunc builder, MaxRequestContentLengthOptions options)
-        {
-            builder.MustNotNull("builder");
-
-            builder(MaxRequestContentLength(options));
-            return builder;
-        }
-
-        /// <summary>
         /// Limits the length of the URL.
         /// </summary>
         /// <param name="builder">The OWIN builder instance.</param>
@@ -505,8 +497,20 @@
         {
             builder.MustNotNull("builder");
 
-            builder(MaxUrlLength(options));
+            builder(_ => MaxUrlLength(options));
             return builder;
+        }
+
+        private static bool IsChunkedRequest(IOwinRequest request)
+        {
+            string header = request.Headers.Get("Transfer-Encoding");
+            return header != null && header.Equals("chunked", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void SetResponseStatusCodeAndReasonPhrase(IOwinContext context, int statusCode, MaxRequestContentLengthOptions options)
+        {
+            context.Response.StatusCode = statusCode;
+            context.Response.ReasonPhrase = options.LimitReachedReasonPhrase(context.Response.StatusCode);
         }
     }
 }
