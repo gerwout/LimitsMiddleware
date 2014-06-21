@@ -1,4 +1,4 @@
-Owin.Limits
+Limits Middleware
 ===========
 
 [![Build status](https://ci.appveyor.com/api/projects/status/o6bm02n8stya868r)](https://ci.appveyor.com/project/damianh/limitsmiddleware) [![NuGet Status](http://img.shields.io/nuget/v/LimitsMiddleware.svg?style=flat)](https://www.nuget.org/packages/LimitsMiddleware/) [![NuGet Status](http://img.shields.io/nuget/v/LimitsMiddleware.OwinAppBuilder.svg?style=flat)](https://www.nuget.org/packages/LimitsMiddleware.OwinAppBuilder/)
