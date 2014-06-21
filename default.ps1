@@ -1,5 +1,5 @@
 properties { 
-	$projectName = "Owin.Limits"
+	$projectName = "LimitsMiddleware"
 	$buildNumber = 0
 	$rootDir  = Resolve-Path .\
 	$buildOutputDir = "$rootDir\build"
@@ -9,7 +9,7 @@ properties {
 	$assemblyInfoFilePath = "$srcDir\SharedAssemblyInfo.cs"
 }
 
-task default -depends Clean, UpdateVersion, RunTests, ILRepack, CopyBuildOutput, CreateNuGetPackages
+task default -depends Clean, UpdateVersion, RunTests, CreateNuGetPackages
 
 task Clean {
 	Remove-Item $buildOutputDir -Force -Recurse -ErrorAction SilentlyContinue
@@ -38,22 +38,11 @@ task RunTests -depends Compile {
     }
 }
 
-task ILRepack -depends Compile {
-	$ilrepack = "$srcDir\packages\ILRepack.1.22.2\tools\ILRepack.exe"
-	$workingDir = "$srcDir\Owin.Limits\bin\Release"
-	.$ilrepack /targetplatform:v4 /internalize /target:library /out:$workingDir\Owin.Limits.dll $workingDir\Owin.Limits.dll $workingDir\Microsoft.Owin.dll $workingDir\Owin.dll
-}
-
-task CopyBuildOutput -depends Compile {
-	$binOutputDir = "$buildOutputDir\bin\$projectName\net45\"
-	New-Item $binOutputDir -Type Directory
-	gci $srcDir\$projectName\bin\Release |% { Copy-Item "$srcDir\$projectName\bin\Release\$_" $binOutputDir}
-}
-
-task CreateNuGetPackages -depends CopyBuildOutput {
+task CreateNuGetPackages -depends Compile {
 	$versionString = Get-Version $assemblyInfoFilePath
 	$version = New-Object Version $versionString
-	$packageVersion = $version.Major.ToString() + "." + $version.Minor.ToString() + "." + $version.Build.ToString()
-	copy-item $srcDir\$projectName\$projectName.nuspec $buildOutputDir
-	exec { .$srcDir\packages\Midori.0.8.0.0\tools\nuget.exe pack $buildOutputDir\$projectName.nuspec -BasePath $buildOutputDir -o $buildOutputDir -version $packageVersion }
+	$packageVersion = $version.Major.ToString() + "." + $version.Minor.ToString() + "." + $version.Build.ToString() + "-build" + $buildNumber.ToString().PadLeft(5,'0')
+	gci $srcDir -Recurse -Include *.nuspec | % {
+		exec { .$srcDir\.nuget\nuget.exe pack $_ -o $buildOutputDir -version $packageVersion }
+	}
 }
