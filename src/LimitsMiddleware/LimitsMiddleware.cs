@@ -70,7 +70,7 @@
                     Stream responseBodyStream = context.Response.Body;
 
                     options.Tracer.AsVerbose("Configure timeouts.");
-                    TimeSpan connectionTimeout = options.GetTimeout();
+                    TimeSpan connectionTimeout = options.Timeout;
                     context.Request.Body = new TimeoutStream(requestBodyStream, connectionTimeout, options.Tracer);
                     context.Response.Body = new TimeoutStream(responseBodyStream, connectionTimeout, options.Tracer);
 
@@ -88,6 +88,8 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc ConnectionTimeout(this BuildFunc builder, TimeSpan timeout)
         {
+            builder.MustNotNull("builder");
+            
             return ConnectionTimeout(builder, () => timeout);
         }
 
@@ -101,6 +103,9 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc ConnectionTimeout(this BuildFunc builder, Func<TimeSpan> getTimeout)
         {
+            builder.MustNotNull("builder");
+            getTimeout.MustNotNull("getTimeout");
+
             return ConnectionTimeout(builder, new ConnectionTimeoutOptions(getTimeout));
         }
 
@@ -115,6 +120,7 @@
         public static BuildFunc ConnectionTimeout(this BuildFunc builder, ConnectionTimeoutOptions options)
         {
             builder.MustNotNull("builder");
+            options.MustNotNull("options");
 
             builder(_ => ConnectionTimeout(options));
             return builder;
@@ -139,6 +145,8 @@
         /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxBandwidth(Func<int> getMaxBytesPerSecond)
         {
+            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
+
             return MaxBandwidth(new MaxBandwidthOptions(getMaxBytesPerSecond));
         }
 
@@ -158,7 +166,7 @@
                     var context = new OwinContext(env);
                     Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                     Stream responseBodyStream = context.Response.Body;
-                    int maxBytesPerSecond = options.GetMaxBytesPerSecond();
+                    int maxBytesPerSecond = options.MaxBytesPerSecond;
                     if (maxBytesPerSecond < 0)
                     {
                         maxBytesPerSecond = 0;
@@ -182,6 +190,8 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc MaxBandwidth(this BuildFunc builder, int maxBytesPerSecond)
         {
+            builder.MustNotNull("builder");
+
             return MaxBandwidth(builder, () => maxBytesPerSecond);
         }
 
@@ -194,6 +204,8 @@
         /// <returns>The builder instance.</returns>
         public static BuildFunc MaxBandwidth(this BuildFunc builder, Func<int> getMaxBytesPerSecond)
         {
+            builder.MustNotNull("builder");
+
             return MaxBandwidth(builder, new MaxBandwidthOptions(getMaxBytesPerSecond));
         }
 
@@ -207,6 +219,7 @@
         public static BuildFunc MaxBandwidth(this BuildFunc builder, MaxBandwidthOptions options)
         {
             builder.MustNotNull("builder");
+            options.MustNotNull("options");
 
             builder(_ => MaxBandwidth(options));
             return builder;
@@ -231,6 +244,8 @@
         /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxConcurrentRequests(Func<int> getMaxConcurrentRequests)
         {
+            getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
+
             return MaxConcurrentRequests(new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
         }
 
@@ -248,7 +263,7 @@
                 next =>
                 async env =>
                 {
-                    int maxConcurrentRequests = options.GetMaxConcurrentRequests();
+                    int maxConcurrentRequests = options.MaxConcurrentRequests;
                     if (maxConcurrentRequests <= 0)
                     {
                         maxConcurrentRequests = int.MaxValue;
@@ -286,6 +301,8 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, int maxConcurrentRequests)
         {
+            builder.MustNotNull("builder");
+
             return MaxConcurrentRequests(builder, () => maxConcurrentRequests);
         }
 
@@ -298,6 +315,9 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, Func<int> getMaxConcurrentRequests)
         {
+            builder.MustNotNull("builder");
+            getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
+
             return MaxConcurrentRequests(builder, new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
         }
 
@@ -311,6 +331,7 @@
         public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, MaxConcurrentRequestOptions options)
         {
             builder.MustNotNull("builder");
+            options.MustNotNull("options");
 
             builder(_ => MaxConcurrentRequests(options));
             return builder;
@@ -333,6 +354,8 @@
         /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxQueryStringLength(Func<int> getMaxQueryStringLength)
         {
+            getMaxQueryStringLength.MustNotNull("getMaxQueryStringLength");
+
             return MaxQueryStringLength(new MaxQueryStringLengthOptions(getMaxQueryStringLength));
         }
 
@@ -353,7 +376,7 @@
                     QueryString queryString = context.Request.QueryString;
                     if (queryString.HasValue)
                     {
-                        int maxQueryStringLength = options.GetMaxQueryStringLength();
+                        int maxQueryStringLength = options.MaxQueryStringLength;
                         string unescapedQueryString = Uri.UnescapeDataString(queryString.Value);
                         options.Tracer.AsVerbose("Querystring of request with an unescaped length of {0}", unescapedQueryString.Length);
                         if (unescapedQueryString.Length > maxQueryStringLength)
@@ -383,6 +406,8 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc MaxQueryStringLength(this BuildFunc builder, int maxQueryStringLength)
         {
+            builder.MustNotNull("builder");
+
             return MaxQueryStringLength(builder, () => maxQueryStringLength);
         }
 
@@ -394,6 +419,9 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc MaxQueryStringLength(this BuildFunc builder, Func<int> getMaxQueryStringLength)
         {
+            builder.MustNotNull("builder");
+            getMaxQueryStringLength.MustNotNull("getMaxQueryStringLength");
+
             return MaxQueryStringLength(builder, new MaxQueryStringLengthOptions(getMaxQueryStringLength));
         }
 
@@ -407,6 +435,7 @@
         public static BuildFunc MaxQueryStringLength(this BuildFunc builder, MaxQueryStringLengthOptions options)
         {
             builder.MustNotNull("builder");
+            options.MustNotNull("options");
 
             builder(_ => MaxQueryStringLength(options));
             return builder;
@@ -429,6 +458,8 @@
         /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxRequestContentLength(Func<int> getMaxContentLength)
         {
+            getMaxContentLength.MustNotNull("getMaxContentLength");
+
             return MaxRequestContentLength(new MaxRequestContentLengthOptions(getMaxContentLength));
         }
 
@@ -455,7 +486,7 @@
                         await next(env);
                         return;
                     }
-                    int maxContentLength = options.GetMaxContentLength();
+                    int maxContentLength = options.MaxContentLength;
                     options.Tracer.AsVerbose("Max valid content length is {0}.", maxContentLength);
                     if (!IsChunkedRequest(request))
                     {
@@ -512,6 +543,8 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc MaxRequestContentLength(this BuildFunc builder, int maxContentLength)
         {
+            builder.MustNotNull("builder");
+
             return MaxRequestContentLength(builder, () => maxContentLength);
         }
 
@@ -523,6 +556,9 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc MaxRequestContentLength(this BuildFunc builder, Func<int> getMaxContentLength)
         {
+            builder.MustNotNull("builder");
+            getMaxContentLength.MustNotNull("getMaxContentLength");
+
             return MaxRequestContentLength(builder, new MaxRequestContentLengthOptions(getMaxContentLength));
         }
 
@@ -536,6 +572,7 @@
         public static BuildFunc MaxRequestContentLength(this BuildFunc builder, MaxRequestContentLengthOptions options)
         {
             builder.MustNotNull("builder");
+            options.MustNotNull("options");
 
             builder(_ => MaxRequestContentLength(options));
             return builder;
@@ -558,6 +595,8 @@
         /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxUrlLength(Func<int> getMaxUrlLength)
         {
+            getMaxUrlLength.MustNotNull("getMaxUrlLength");
+
             return MaxUrlLength(new MaxUrlLengthOptions(getMaxUrlLength));
         }
 
@@ -575,7 +614,7 @@
                 env =>
                 {
                     var context = new OwinContext(env);
-                    int maxUrlLength = options.GetMaxUrlLength();
+                    int maxUrlLength = options.MaxUrlLength;
                     string unescapedUri = Uri.UnescapeDataString(context.Request.Uri.AbsoluteUri);
 
                     options.Tracer.AsVerbose("Checking request url length.");
@@ -603,6 +642,8 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc MaxUrlLength(this BuildFunc builder, int maxUrlLength)
         {
+            builder.MustNotNull("builder");
+
             return MaxUrlLength(builder, () => maxUrlLength);
         }
 
@@ -614,6 +655,9 @@
         /// <returns>The OWIN builder instance.</returns>
         public static BuildFunc MaxUrlLength(this BuildFunc builder, Func<int> getMaxUrlLength)
         {
+            builder.MustNotNull("builder");
+            getMaxUrlLength.MustNotNull("getMaxUrlLength");
+
             return MaxUrlLength(builder, new MaxUrlLengthOptions(getMaxUrlLength));
         }
 
@@ -627,6 +671,7 @@
         public static BuildFunc MaxUrlLength(this BuildFunc builder, MaxUrlLengthOptions options)
         {
             builder.MustNotNull("builder");
+            options.MustNotNull("options");
 
             builder(_ => MaxUrlLength(options));
             return builder;

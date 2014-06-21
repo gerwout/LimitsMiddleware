@@ -7,6 +7,8 @@ namespace LimitsMiddleware
     /// </summary>
     public class ConnectionTimeoutOptions : OptionsBase
     {
+        private readonly Func<TimeSpan> _getTimeout;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="ConnectionTimeoutOptions"/> class.
         /// </summary>
@@ -21,9 +23,17 @@ namespace LimitsMiddleware
         /// to supply different values at runtime.</param>
         public ConnectionTimeoutOptions(Func<TimeSpan> getTimeout)
         {
-            GetTimeout = getTimeout;
+            getTimeout.MustNotNull("getTimeout");
+
+            _getTimeout = getTimeout;
         }
 
-        internal Func<TimeSpan> GetTimeout { get; private set; }
+        /// <summary>
+        /// The Timeout.
+        /// </summary>
+        public TimeSpan Timeout
+        {
+            get { return _getTimeout(); }
+        }
     }
 }

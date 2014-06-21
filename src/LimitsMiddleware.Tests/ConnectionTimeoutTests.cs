@@ -15,6 +15,18 @@
     public class ConnectionTimeoutTests
     {
         [Fact]
+        public void When_time_out_delegate_is_null_then_should_throw()
+        {
+            Assert.Throws<ArgumentNullException>(() => LimitsMiddleware.ConnectionTimeout((Func<TimeSpan>)null));
+        }
+
+        [Fact]
+        public void When_options_is_null_then_should_throw()
+        {
+            Assert.Throws<ArgumentNullException>(() => LimitsMiddleware.ConnectionTimeout((ConnectionTimeoutOptions)null));
+        }
+
+        [Fact]
         public async Task When_time_out_is_triggered_then_should_throw()
         {
             TimeSpan timeout = TimeSpan.FromMilliseconds(1000);

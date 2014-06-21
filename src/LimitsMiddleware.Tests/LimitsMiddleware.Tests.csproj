@@ -69,11 +69,17 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="AppBuilderExtensions.cs" />
+    <Compile Include="ConnectionTimeoutOptionsTests.cs" />
     <Compile Include="ConnectionTimeoutTests.cs" />
+    <Compile Include="MaxBandwidthOptionsTests.cs" />
+    <Compile Include="MaxConcurrentRequestsOptionsTests.cs" />
     <Compile Include="MaxConcurrentRequestsTests.cs" />
     <Compile Include="MaxBandwidthTests.cs" />
     <Compile Include="MaxContentLengthMiddlewareTests.cs" />
+    <Compile Include="MaxQueryStringLengthOptionsTests.cs" />
     <Compile Include="MaxQueryStringTests.cs" />
+    <Compile Include="MaxRequestContentLengthOptionsTests.cs" />
+    <Compile Include="MaxUrlLengthOptionsTests.cs" />
     <Compile Include="MaxUrlLengthTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

@@ -7,6 +7,7 @@ namespace LimitsMiddleware
     /// </summary>
     public class MaxRequestContentLengthOptions : OptionsBase
     {
+        private readonly Func<int> _getMaxContentLength;
         private Func<int, string> _limitReachedReasonPhrase;
 
         /// <summary>
@@ -22,10 +23,18 @@ namespace LimitsMiddleware
         /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
         public MaxRequestContentLengthOptions(Func<int> getMaxContentLength)
         {
-            GetMaxContentLength = getMaxContentLength;
+            getMaxContentLength.MustNotNull("getMaxContentLength");
+
+            _getMaxContentLength = getMaxContentLength;
         }
 
-        internal Func<int> GetMaxContentLength { get; private set; }
+        /// <summary>
+        /// The maximum content length
+        /// </summary>
+        public int MaxContentLength
+        {
+            get { return _getMaxContentLength(); }
+        }
 
         /// <summary>
         /// Gets or sets the delegate to set a reasonphrase.<br/>

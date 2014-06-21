@@ -7,6 +7,8 @@ namespace LimitsMiddleware
     /// </summary>
     public class MaxBandwidthOptions : OptionsBase
     {
+        private readonly Func<int> _getMaxBytesPerSecond;
+
         /// <summary>
         /// Initializes a new instance of the <see cref="MaxBandwidthOptions"/> class.
         /// </summary>
@@ -22,9 +24,15 @@ namespace LimitsMiddleware
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         public MaxBandwidthOptions(Func<int> getMaxBytesPerSecond)
         {
-            GetMaxBytesPerSecond = getMaxBytesPerSecond;
+            _getMaxBytesPerSecond = getMaxBytesPerSecond;
         }
 
-        internal Func<int> GetMaxBytesPerSecond { get; private set; }
+        /// <summary>
+        /// The maximum bytes per second
+        /// </summary>
+        public int MaxBytesPerSecond
+        {
+            get { return _getMaxBytesPerSecond(); }
+        }
     }
 }

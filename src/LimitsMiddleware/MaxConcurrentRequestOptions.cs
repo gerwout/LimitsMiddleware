@@ -7,6 +7,7 @@
     /// </summary>
     public class MaxConcurrentRequestOptions : OptionsBase
     {
+        private readonly Func<int> _getMaxConcurrentRequests;
         private Func<int, string> _limitReachedReasonPhrase;
 
         /// <summary>
@@ -24,10 +25,18 @@
         /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
         public MaxConcurrentRequestOptions(Func<int> getMaxConcurrentRequests)
         {
-            GetMaxConcurrentRequests = getMaxConcurrentRequests;
+            getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
+
+            _getMaxConcurrentRequests = getMaxConcurrentRequests;
         }
 
-        internal Func<int> GetMaxConcurrentRequests { get; set; }
+        /// <summary>
+        /// The maximum number of concurrent requests.
+        /// </summary>
+        public int MaxConcurrentRequests
+        {
+            get { return _getMaxConcurrentRequests(); }
+        }
 
         /// <summary>
         /// Gets or sets the delegate to set a reasonphrase.<br/>

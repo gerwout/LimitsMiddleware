@@ -7,6 +7,7 @@
     /// </summary>
     public class MaxUrlLengthOptions : OptionsBase
     {
+        private readonly Func<int> _getMaxUrlLength;
         private Func<int, string> _limitReachedReasonPhrase;
 
         /// <summary>
@@ -22,10 +23,18 @@
         /// <param name="getMaxUrlLength">A delegate to get the maximum URL length.</param>
         public MaxUrlLengthOptions(Func<int> getMaxUrlLength)
         {
-            GetMaxUrlLength = getMaxUrlLength;
+            getMaxUrlLength.MustNotNull("getMaxUrlLength");
+
+            _getMaxUrlLength = getMaxUrlLength;
         }
 
-        internal Func<int> GetMaxUrlLength { get; set; }
+        /// <summary>
+        /// The maximum url length.
+        /// </summary>
+        public int MaxUrlLength
+        {
+            get { return _getMaxUrlLength(); }
+        }
 
         /// <summary>
         /// Gets or sets the delegate to set a reasonphrase.<br/>

@@ -7,6 +7,7 @@
     /// </summary>
     public class MaxQueryStringLengthOptions : OptionsBase
     {
+        private readonly Func<int> _getMaxQueryStringLength;
         private Func<int, string> _limitReachedReasonPhrase;
 
         /// <summary>
@@ -23,10 +24,18 @@
         /// <param name="getMaxQueryStringLength">A delegate to get the maximum query string length.</param>
         public MaxQueryStringLengthOptions(Func<int> getMaxQueryStringLength)
         {
-            GetMaxQueryStringLength = getMaxQueryStringLength;
+            getMaxQueryStringLength.MustNotNull("getMaxQueryStringLength");
+
+            _getMaxQueryStringLength = getMaxQueryStringLength;
         }
 
-        internal Func<int> GetMaxQueryStringLength { get; private set; }
+        /// <summary>
+        /// The maximum query string length
+        /// </summary>
+        public int MaxQueryStringLength
+        {
+            get { return _getMaxQueryStringLength(); }
+        }
 
         /// <summary>
         /// Gets or sets the delegate to set a reasonphrase.<br/>
