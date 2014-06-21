@@ -26,7 +26,7 @@ An asp.net vNext builder integration package will be forthcoming.
 
 #### Using
 
-Configuration values can be supplied as constants or with a delegate. The latter allows you to change the values at runtime. Use which ever you see fit. This code assumes you have the above `AppBuilderExtensions` class in your application. 
+Configuration values can be supplied as constants or with a delegate. The latter allows you to change the values at runtime. Use which ever you see fit. This code assumes you have installed 'LimitsMiddleware.OwinAppBuilder'
 
 
 ```csharp
