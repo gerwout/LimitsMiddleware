@@ -56,8 +56,8 @@
         private static HttpClient CreateHttpClient(Func<TimeSpan> getConnectionTimeout)
         {
             return TestServer.Create(builder => builder
-                .Use().ConnectionTimeout(getConnectionTimeout)
-                .Use(builder)
+                .UseOwn().ConnectionTimeout(getConnectionTimeout)
+                .UseAppBuilder(builder)
                 .Use(async (context, _) =>
                 {
                     var buffer = new byte[1024];

@@ -1,4 +1,3 @@
-
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
@@ -11,6 +10,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware", "LimitsMiddleware\LimitsMiddleware.csproj", "{757A5ABF-F560-416D-8494-C7A2C6F8E1EF}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.Tests", "LimitsMiddleware.Tests\LimitsMiddleware.Tests.csproj", "{2C2D78F6-27ED-4777-9E1A-476F9816E344}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.OwinAppBuilder", "LimitsMiddleware.OwinAppBuilder\LimitsMiddleware.OwinAppBuilder.csproj", "{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -26,6 +27,10 @@ Global
 		{2C2D78F6-27ED-4777-9E1A-476F9816E344}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2C2D78F6-27ED-4777-9E1A-476F9816E344}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2C2D78F6-27ED-4777-9E1A-476F9816E344}.Release|Any CPU.Build.0 = Release|Any CPU
+		{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
