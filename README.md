@@ -1,9 +1,10 @@
 Owin.Limits
 ===========
 
-OWIN middleware to apply limits to an OWIN pipeline. Install via [nuget].
+[![Build status](https://ci.appveyor.com/api/projects/status/o6bm02n8stya868r)](https://ci.appveyor.com/project/damianh/limitsmiddleware) [![NuGet Status](http://img.shields.io/nuget/v/LimitsMiddleware.svg?style=flat)](https://www.nuget.org/packages/LimitsMiddleware/) [![NuGet Status](http://img.shields.io/nuget/v/LimitsMiddleware.OwinAppBuilder.svg?style=flat)](https://www.nuget.org/packages/LimitsMiddleware.OwinAppBuilder/)
 
-#### Implemented:
+OWIN middleware to apply limits to an OWIN pipeline:
+
  - Max bandwidth
  - Max concurrent requests
  - Connection timeout
@@ -11,36 +12,19 @@ OWIN middleware to apply limits to an OWIN pipeline. Install via [nuget].
  - Max request content length
  - Max url length
  
-#### TODO:
- - Header limits?
- - Per request limits
+#### Installation
 
-#### IAppBuilder
+There are two nuget packages. The main one is pure owin and this has no dependencies.
 
-Owin.dll and IAppBuilder is deprecated. As of version 2.0.0, Owin.Limits no longer depends on owin.dll. To provide compatibility with IAppBuilder, add the following class to your application:
+`install-package StatusCodeHandlersMiddleware`
 
-```csharp
-namespace Owin
-{
-    using System;
-    using Owin.Limits;
+The second package provides integration with IAppBuilder, which is deprecated but provided here for legacy and compatability reasons.
 
-    internal static class AppBuilderExtensions
-    {
-        internal static Action<MidFunc> Use(this IAppBuilder builder)
-        {
-            return middleware => builder.Use(middleware);
-        }
+`install-package StatusCodeHandlersMiddleware.OwinAppBuilder`
 
-        internal static IAppBuilder Use(this Action<MidFunc> middleware, IAppBuilder builder)
-        {
-            return builder;
-        }
-    }
-}
-```
+An asp.net vNext builder integration package will be forthcoming.
 
-#### Examples
+#### Using
 
 Configuration values can be supplied as constants or with a delegate. The latter allows you to change the values at runtime. Use which ever you see fit. This code assumes you have the above `AppBuilderExtensions` class in your application. 
 
@@ -73,13 +57,16 @@ public class Startup
 }
 ```
 
-
 Questions or suggestions? Create an issue or [@randompunter] on twitter.
 
-Pull requests gratefully accepted.
+#### Help
 
-Thanks to the following contributors!
- - [Stefan Ossendorf](https://github.com/StefanOssendorf) ([@Pherenetic](https://twitter.com/Pherenetic))
+Bugs? Create an issue. Questions [@randompunter](https://twitter.com/randompunter) or [OWIN room on Jabbr](https://jabbr.net/#/rooms/owin)
 
-[nuget]: https://www.nuget.org/packages/Owin.Limits
-[@randompunter]: http://twitter.com/randompunter
+##### Developed with:
+
+[![Resharper](http://neventstore.org/images/logo_resharper_small.gif)](http://www.jetbrains.com/resharper/)
+[![TeamCity](http://neventstore.org/images/logo_teamcity_small.gif)](http://www.jetbrains.com/teamcity/)
+[![dotCover](http://neventstore.org/images/logo_dotcover_small.gif)](http://www.jetbrains.com/dotcover/)
+[![dotTrace](http://neventstore.org/images/logo_dottrace_small.gif)](http://www.jetbrains.com/dottrace/)
+
