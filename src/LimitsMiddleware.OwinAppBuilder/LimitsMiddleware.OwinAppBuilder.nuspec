@@ -1,25 +1,23 @@
 ﻿<?xml version="1.0"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
     <metadata>
-        <id>LimitsMiddleware</id>
+        <id>LimitsMiddleware.OwinAppBuilder</id>
         <version>0.0.0.0</version>
         <authors>Damian Hickey</authors>
         <owners>Damian Hickey</owners>
         <projectUrl>https://github.com/damianh/LimitsMiddleware</projectUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <title>Limits Middleware</title>
+        <title>Limits Middleware AppBuilder Integration</title>
         <description>
-            Middleware that applies limits to an OWIN pipeline. Currently supported are max bandwidth, max concurrent requests, connection timeout,
-            max request content length, max querystring length and max url length.
+            Integration package for the Limits middleware for users of the (now deprecated) IAppBuilder.
         </description>
         <tags>owin, middleware, throttling, limits</tags>
         <frameworkAssemblies />
         <releaseNotes>
-            Remove dependency on owin.dll
         </releaseNotes>
     </metadata>
     <files>
-        <file src="bin\Release\LimitsMiddleware.dll" target="lib\net45" />
-        <file src="bin\Release\LimitsMiddleware.xml" target="lib\net45" />
+        <file src="bin\Release\LimitsMiddleware.OwinAppBuilder.dll" target="lib\net45" />
+        <file src="bin\Release\LimitsMiddleware.OwinAppBuilder.xml" target="lib\net45" />
     </files>
 </package>
