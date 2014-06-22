@@ -53,7 +53,7 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="LimitsMiddleware.cs" />
+    <Compile Include="Limits.cs" />
     <Compile Include="ConnectionTimeoutOptions.cs" />
     <Compile Include="ContentLengthExceededException.cs" />
     <Compile Include="ContentLengthLimitingStream.cs" />

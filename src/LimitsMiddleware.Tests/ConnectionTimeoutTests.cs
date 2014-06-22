@@ -17,13 +17,13 @@
         [Fact]
         public void When_time_out_delegate_is_null_then_should_throw()
         {
-            Assert.Throws<ArgumentNullException>(() => LimitsMiddleware.ConnectionTimeout((Func<TimeSpan>)null));
+            Assert.Throws<ArgumentNullException>(() => Limits.ConnectionTimeout((Func<TimeSpan>)null));
         }
 
         [Fact]
         public void When_options_is_null_then_should_throw()
         {
-            Assert.Throws<ArgumentNullException>(() => LimitsMiddleware.ConnectionTimeout((ConnectionTimeoutOptions)null));
+            Assert.Throws<ArgumentNullException>(() => Limits.ConnectionTimeout((ConnectionTimeoutOptions)null));
         }
 
         [Fact]
