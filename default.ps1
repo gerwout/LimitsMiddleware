@@ -7,9 +7,10 @@ properties {
 	$srcDir = "$rootDir\src"
 	$solutionFilePath = "$srcDir\$projectName.sln"
 	$assemblyInfoFilePath = "$srcDir\SharedAssemblyInfo.cs"
+	$ilmerge_path = "$srcDir\packages\ILMerge.2.13.0307\ILMerge.exe"
 }
 
-task default -depends Clean, UpdateVersion, RunTests, CreateNuGetPackages
+task default -depends Clean, UpdateVersion, ILMerge, CreateNuGetPackages
 
 task Clean {
 	Remove-Item $buildOutputDir -Force -Recurse -ErrorAction SilentlyContinue
@@ -25,6 +26,21 @@ task UpdateVersion {
 
 task Compile { 
 	exec { msbuild /nologo /verbosity:quiet $solutionFilePath /p:Configuration=Release }
+}
+
+task ILMerge -depends Compile {
+	$dllDir = "$srcDir\LimitsMiddleware\bin\Release"
+	$input_dlls = "$dllDir\LimitsMiddleware.dll"
+	Get-ChildItem -Path $dllDir -Filter *.dll |
+		foreach-object {
+			if ("$_" -ne "LimitsMiddleware.dll") {
+				$input_dlls = "$input_dlls $dllDir\$_"
+			}
+	}
+
+	$input_dlls
+	New-Item $buildOutputDir -Type Directory
+	Invoke-Expression "$ilmerge_path /targetplatform:v4 /internalize /allowDup /target:library /out:$buildOutputDir\$projectName.dll $input_dlls"
 }
 
 task RunTests -depends Compile {
