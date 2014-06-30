@@ -10,7 +10,7 @@ properties {
 	$ilmerge_path = "$srcDir\packages\ILMerge.2.13.0307\ILMerge.exe"
 }
 
-task default -depends Clean, UpdateVersion, ILMerge, CreateNuGetPackages
+task default -depends Clean, UpdateVersion, RunTests, ILMerge, CreateNuGetPackages
 
 task Clean {
 	Remove-Item $buildOutputDir -Force -Recurse -ErrorAction SilentlyContinue
