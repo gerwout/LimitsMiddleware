@@ -38,7 +38,7 @@
         private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond)
         {
             return TestServer.Create(builder => builder
-                .UseOwn().MaxBandwidth(getMaxBytesPerSecond)
+                .UseOwin().MaxBandwidth(getMaxBytesPerSecond)
                 .UseAppBuilder(builder)
                 .Use(async (context, _) =>
                 {

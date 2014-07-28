@@ -56,7 +56,7 @@
         private static HttpClient CreateHttpClient(Func<TimeSpan> getConnectionTimeout)
         {
             return TestServer.Create(builder => builder
-                .UseOwn().ConnectionTimeout(getConnectionTimeout)
+                .UseOwin().ConnectionTimeout(getConnectionTimeout)
                 .UseAppBuilder(builder)
                 .Use(async (context, _) =>
                 {

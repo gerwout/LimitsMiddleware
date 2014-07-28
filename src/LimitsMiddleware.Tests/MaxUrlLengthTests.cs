@@ -45,7 +45,7 @@
         private static HttpClient CreateClient(int length)
         {
             return TestServer.Create(builder => builder
-                .UseOwn().MaxUrlLength(new MaxUrlLengthOptions(length)
+                .UseOwin().MaxUrlLength(new MaxUrlLengthOptions(length)
                 {
                     LimitReachedReasonPhrase = code => "custom phrase"
                 })

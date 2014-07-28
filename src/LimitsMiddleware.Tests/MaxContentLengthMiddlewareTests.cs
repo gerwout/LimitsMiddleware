@@ -159,7 +159,7 @@
         private static RequestBuilder CreateRequest(int maxContentLength)
         {
             TestServer server = TestServer.Create(builder => builder
-                .UseOwn().MaxRequestContentLength(new MaxRequestContentLengthOptions(maxContentLength)
+                .UseOwin().MaxRequestContentLength(new MaxRequestContentLengthOptions(maxContentLength)
                 {
                     LimitReachedReasonPhrase = code => "custom phrase"
                 })

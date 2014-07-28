@@ -54,7 +54,7 @@
         private static HttpClient CreateHttpClient(int maxConcurrentRequests)
         {
             return TestServer.Create(builder => builder
-                .UseOwn().MaxBandwidth(1)
+                .UseOwin().MaxBandwidth(1)
                 .MaxConcurrentRequests(new MaxConcurrentRequestOptions(maxConcurrentRequests)
                 {
                     LimitReachedReasonPhrase = code => "custom phrase"
