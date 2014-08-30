@@ -38,8 +38,7 @@ task ILMerge -depends Compile {
 			}
 	}
 
-	$input_dlls
-	New-Item $buildOutputDir -Type Directory
+	New-Item $buildOutputDir -Type Directory -ErrorAction SilentlyContinue
 	Invoke-Expression "$ilmerge_path /targetplatform:v4 /internalize /allowDup /target:library /out:$buildOutputDir\$projectName.dll $input_dlls"
 }
 
