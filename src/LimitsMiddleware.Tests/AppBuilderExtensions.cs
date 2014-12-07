@@ -1,6 +1,5 @@
 ﻿namespace LimitsMiddleware
 {
-    using global::Owin;
     using Owin;
     using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
     using MidFunc = System.Func<
