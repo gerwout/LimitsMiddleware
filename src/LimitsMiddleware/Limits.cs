@@ -4,7 +4,7 @@
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
-    using LimitsMiddleware.Owin;
+    using LimitsMiddleware.LibOwin;
     using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
     using MidFunc = System.Func<
         System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,

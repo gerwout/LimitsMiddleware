@@ -5,13 +5,12 @@
 // Modifying this file may result in difficulties when upgrading the package.
 // All types are internal. Add a LIBOWIN_PUBLIC compilation symbol to make them public.
 
-namespace LimitsMiddleware.Owin.Infrastructure
+namespace LimitsMiddleware.LibOwin.Infrastructure
 {
     using System;
     using System.Collections;
     using System.Collections.Generic;
     using System.Linq;
-    using LimitsMiddleware.Owin;
 
     internal static class Constants
     {
@@ -880,7 +879,7 @@ namespace LimitsMiddleware.Owin.Infrastructure
     }
 }
 
-namespace LimitsMiddleware.Owin
+namespace LimitsMiddleware.LibOwin
 {
     using System;
     using System.Collections;
@@ -892,7 +891,7 @@ namespace LimitsMiddleware.Owin
     using System.Text;
     using System.Threading;
     using System.Threading.Tasks;
-    using LimitsMiddleware.Owin.Infrastructure;
+    using LimitsMiddleware.LibOwin.Infrastructure;
 
     /// <summary>
     /// Options used to create a new cookie.
