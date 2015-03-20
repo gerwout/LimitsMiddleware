@@ -24,6 +24,7 @@
             stopwatch.Start();
             await httpClient.GetAsync("http://example.com");
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
+            stopwatch.Restart();
 
             bandwidth = 1; // ~1bps, should take ~3s
             await httpClient.GetAsync("http://example.com");
