@@ -130,13 +130,13 @@
             if (elapsedMilliseconds >= 0)
             {
                 // Calculate the current bps.
-                long bps = elapsedMilliseconds == 0 ? long.MaxValue : _byteCount*1000L/elapsedMilliseconds;
+                long bps = elapsedMilliseconds == 0 ? long.MaxValue : _byteCount/(elapsedMilliseconds*1000L);
 
                 // If the bps are more then the maximum bps, try to throttle.
                 if (bps > _maximumBytesPerSecond)
                 {
                     // Calculate the time to sleep.
-                    long wakeElapsed = _byteCount*1000L/_maximumBytesPerSecond;
+                    long wakeElapsed = _byteCount/_maximumBytesPerSecond;
                     var toSleep = (int) (wakeElapsed - elapsedMilliseconds);
 
                     if (toSleep > 1)
