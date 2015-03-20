@@ -11,33 +11,16 @@
 
     internal class ThrottledStream : Stream
     {
-        private const long Infinite = 0;
         private readonly Stream _innerStream;
-        private readonly long _maximumBytesPerSecond;
-        private long _byteCount;
-        private long _start;
+        private readonly RateLimiter _rateLimiter;
 
-        public ThrottledStream(Stream innerStream, long maximumBytesPerSecond = Infinite)
+        public ThrottledStream(Stream innerStream, RateLimiter rateLimiter)
         {
             innerStream.MustNotNull("innerStream");
-
-            if (maximumBytesPerSecond < 0)
-            {
-                throw new ArgumentOutOfRangeException(
-                    "maximumBytesPerSecond",
-                    maximumBytesPerSecond,
-                    "The maximum number of bytes per second can't be negative.");
-            }
+            rateLimiter.MustNotNull("rateLimiter");
 
             _innerStream = innerStream;
-            _maximumBytesPerSecond = maximumBytesPerSecond;
-            _start = CurrentMilliseconds;
-            _byteCount = 0;
-        }
-
-        private long CurrentMilliseconds
-        {
-            get { return Environment.TickCount; }
+            _rateLimiter = rateLimiter;
         }
 
         public override bool CanRead
@@ -78,7 +61,7 @@
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            Throttle(count).Wait();
+            _rateLimiter.Throttle(count).Wait();
 
             return _innerStream.Read(buffer, offset, count);
         }
@@ -90,13 +73,13 @@
 
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await Throttle(count);
+            await _rateLimiter.Throttle(count);
             await _innerStream.WriteAsync(buffer, offset, count, cancellationToken);
         }
 
         public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await Throttle(count);
+            await _rateLimiter.Throttle(count);
             return await _innerStream.ReadAsync(buffer, offset, count, cancellationToken);
         }
 
@@ -107,7 +90,7 @@
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            Throttle(count).Wait();
+            _rateLimiter.Throttle(count).Wait();
             _innerStream.Write(buffer, offset, count);
         }
 
@@ -115,8 +98,39 @@
         {
             return _innerStream.ToString();
         }
+    }
 
-        private async Task Throttle(int bufferSizeInBytes)
+    internal class RateLimiter
+    {
+        private const long Infinite = 0;
+        private readonly long _maximumBytesPerSecond;
+        private long _byteCount;
+        private long _start;
+
+        private long CurrentMilliseconds
+        {
+            get { return Environment.TickCount; }
+        }
+
+       
+        public RateLimiter(long maximumBytesPerSecond = Infinite)
+        {
+            if (maximumBytesPerSecond < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    "maximumBytesPerSecond",
+                    maximumBytesPerSecond,
+                    "The maximum number of bytes per second can't be negative.");
+            }
+
+            _maximumBytesPerSecond = maximumBytesPerSecond;
+            _start = CurrentMilliseconds;
+            _byteCount = 0;
+
+        }
+
+
+        public async Task Throttle(int bufferSizeInBytes)
         {
             // Make sure the buffer isn't empty.
             if (_maximumBytesPerSecond <= 0 || bufferSizeInBytes <= 0)
@@ -130,14 +144,14 @@
             if (elapsedMilliseconds >= 0)
             {
                 // Calculate the current bps.
-                long bps = elapsedMilliseconds == 0 ? long.MaxValue : _byteCount/(elapsedMilliseconds*1000L);
+                long bps = elapsedMilliseconds == 0 ? long.MaxValue : _byteCount / (elapsedMilliseconds * 1000L);
 
                 // If the bps are more then the maximum bps, try to throttle.
                 if (bps > _maximumBytesPerSecond)
                 {
                     // Calculate the time to sleep.
-                    long wakeElapsed = _byteCount/_maximumBytesPerSecond;
-                    var toSleep = (int) (wakeElapsed - elapsedMilliseconds);
+                    long wakeElapsed = _byteCount / _maximumBytesPerSecond;
+                    var toSleep = (int)(wakeElapsed - elapsedMilliseconds);
 
                     if (toSleep > 1)
                     {
@@ -158,6 +172,7 @@
             }
         }
 
+
         private void Reset()
         {
             long difference = CurrentMilliseconds - _start;
@@ -169,5 +184,6 @@
                 _start = CurrentMilliseconds;
             }
         }
+
     }
 }

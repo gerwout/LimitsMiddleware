@@ -179,8 +179,8 @@
                         maxBytesPerSecond = 0;
                     }
                     options.Tracer.AsVerbose("Configure streams to be limited.");
-                    context.Request.Body = new ThrottledStream(requestBodyStream, maxBytesPerSecond);
-                    context.Response.Body = new ThrottledStream(responseBodyStream, maxBytesPerSecond);
+                    context.Request.Body = new ThrottledStream(requestBodyStream, new RateLimiter(maxBytesPerSecond));
+                    context.Response.Body = new ThrottledStream(responseBodyStream, new RateLimiter(maxBytesPerSecond));
 
                     //TODO consider SendFile interception
                     options.Tracer.AsVerbose("With configured limit forwarded.");
