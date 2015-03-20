@@ -166,6 +166,14 @@
         {
             options.MustNotNull("options");
 
+            int maxBytesPerSecond = options.MaxBytesPerSecond;
+            if (maxBytesPerSecond < 0)
+            {
+                maxBytesPerSecond = 0;
+            }
+
+            var rateLimiter = new RateLimiter(maxBytesPerSecond);
+
             return
                 next =>
                 env =>
@@ -173,14 +181,10 @@
                     var context = new OwinContext(env);
                     Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                     Stream responseBodyStream = context.Response.Body;
-                    int maxBytesPerSecond = options.MaxBytesPerSecond;
-                    if (maxBytesPerSecond < 0)
-                    {
-                        maxBytesPerSecond = 0;
-                    }
+
                     options.Tracer.AsVerbose("Configure streams to be limited.");
-                    context.Request.Body = new ThrottledStream(requestBodyStream, new RateLimiter(maxBytesPerSecond));
-                    context.Response.Body = new ThrottledStream(responseBodyStream, new RateLimiter(maxBytesPerSecond));
+                    context.Request.Body = new ThrottledStream(requestBodyStream, rateLimiter);
+                    context.Response.Body = new ThrottledStream(responseBodyStream, rateLimiter);
 
                     //TODO consider SendFile interception
                     options.Tracer.AsVerbose("With configured limit forwarded.");

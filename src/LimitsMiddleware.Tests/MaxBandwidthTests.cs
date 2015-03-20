@@ -30,7 +30,7 @@
             }
 
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
-            bandwidth = 512; // ~1bps, should take ~3s
+            bandwidth = 512;
 
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
             {
@@ -67,7 +67,7 @@
                 stopwatch.Stop();
             }
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
-            bandwidth = 1536; // ~1bps, should take ~3s
+            bandwidth = 1536; // ensuring there is an overlap
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
             {
                 stopwatch.Restart();
@@ -103,8 +103,8 @@
             }
             
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
-            
-            bandwidth = 1536; // ~1bps, should take ~3s
+
+            bandwidth = 1536; // ensuring there is an overlap
 
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
             {
