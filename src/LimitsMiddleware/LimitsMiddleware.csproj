@@ -61,7 +61,7 @@
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="StringExtension.cs" />
-    <Compile Include="ThrottleStream.cs" />
+    <Compile Include="ThrottledStream.cs" />
     <Compile Include="TimeoutStream.cs" />
     <Compile Include="Delegates.cs" />
     <Compile Include="TracerActionExtensions.cs" />
