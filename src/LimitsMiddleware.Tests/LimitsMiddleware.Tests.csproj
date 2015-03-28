@@ -75,7 +75,7 @@
     <Compile Include="AppBuilderExtensions.cs" />
     <Compile Include="ConnectionTimeoutOptionsTests.cs" />
     <Compile Include="ConnectionTimeoutTests.cs" />
-    <Compile Include="GlobalMaxBandwidthTests.cs" />
+    <Compile Include="MaxBandwidthGlobalTests.cs" />
     <Compile Include="MaxBandwidthOptionsTests.cs" />
     <Compile Include="MaxConcurrentRequestsOptionsTests.cs" />
     <Compile Include="MaxConcurrentRequestsTests.cs" />

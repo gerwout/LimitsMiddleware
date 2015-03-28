@@ -10,7 +10,7 @@ namespace LimitsMiddleware
     using Owin;
     using Xunit;
 
-    public class GlobalMaxBandwidthTests
+    public class MaxBandwidthGlobalTests
     {
         [Fact]
         public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer_for_multiple_requests()
@@ -90,7 +90,7 @@ namespace LimitsMiddleware
         private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond)
         {
             return TestServer.Create(builder => builder
-                .UseOwin().GlobalMaxBandwidth(getMaxBytesPerSecond)
+                .UseOwin().MaxBandwidthGlobal(getMaxBytesPerSecond)
                 .UseAppBuilder(builder)
                 .Use(async (context, _) =>
                 {
