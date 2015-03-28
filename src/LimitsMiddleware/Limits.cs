@@ -137,9 +137,10 @@
         /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
         /// number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
+        [Obsolete]
         public static MidFunc MaxBandwidth(int maxBytesPerSecond)
         {
-            return MaxBandwidth(() => maxBytesPerSecond);
+            return MaxBandwidthPerRequest(maxBytesPerSecond);
         }
 
         /// <summary>
@@ -149,11 +150,10 @@
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
         /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
+        [Obsolete]
         public static MidFunc MaxBandwidth(Func<int> getMaxBytesPerSecond)
         {
-            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
-
-            return MaxBandwidth(new MaxBandwidthOptions(getMaxBytesPerSecond));
+            return MaxBandwidthPerRequest(getMaxBytesPerSecond);
         }
 
         /// <summary>
@@ -162,9 +162,96 @@
         /// <param name="options">The max bandwidth options.</param>
         /// <returns>An OWIN middleware delegate.</returns>
         /// <exception cref="System.ArgumentNullException">options</exception>
+        [Obsolete]
         public static MidFunc MaxBandwidth(MaxBandwidthOptions options)
         {
+            return MaxBandwidthPerRequest(options);
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
+        /// number to specify infinite bandwidth.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        [Obsolete]
+        public static BuildFunc MaxBandwidth(this BuildFunc builder, int maxBytesPerSecond)
+        {
+            return MaxBandwidthPerRequest(builder, maxBytesPerSecond);
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
+        /// <returns>The builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
+        [Obsolete]
+        public static BuildFunc MaxBandwidth(this BuildFunc builder, Func<int> getMaxBytesPerSecond)
+        {
+            return MaxBandwidthPerRequest(builder, getMaxBytesPerSecond);
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="options">The max bandwith options.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">options</exception>
+        [Obsolete]
+        public static BuildFunc MaxBandwidth(this BuildFunc builder, MaxBandwidthOptions options)
+        {
+            return MaxBandwidthPerRequest(builder, options);
+        }
+
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
+        /// number to specify infinite bandwidth.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxBandwidthPerRequest(int maxBytesPerSecond)
+        {
+            return MaxBandwidthPerRequest(() => maxBytesPerSecond);
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
+        public static MidFunc MaxBandwidthPerRequest(Func<int> getMaxBytesPerSecond)
+        {
+            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
+
+            return MaxBandwidthPerRequest(new MaxBandwidthOptions(getMaxBytesPerSecond));
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="options">The max bandwidth options.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        /// <exception cref="System.ArgumentNullException">options</exception>
+        public static MidFunc MaxBandwidthPerRequest(MaxBandwidthOptions options)
+        {
             options.MustNotNull("options");
+
+            int maxBytesPerSecond = options.MaxBytesPerSecond;
+            if (maxBytesPerSecond < 0)
+            {
+                maxBytesPerSecond = 0;
+            }
 
             return
                 next =>
@@ -173,14 +260,10 @@
                     var context = new OwinContext(env);
                     Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                     Stream responseBodyStream = context.Response.Body;
-                    int maxBytesPerSecond = options.MaxBytesPerSecond;
-                    if (maxBytesPerSecond < 0)
-                    {
-                        maxBytesPerSecond = 0;
-                    }
+
                     options.Tracer.AsVerbose("Configure streams to be limited.");
-                    context.Request.Body = new ThrottledStream(requestBodyStream, maxBytesPerSecond);
-                    context.Response.Body = new ThrottledStream(responseBodyStream, maxBytesPerSecond);
+                    context.Request.Body = new ThrottledStream(requestBodyStream, new RateLimiter(maxBytesPerSecond));
+                    context.Response.Body = new ThrottledStream(responseBodyStream, new RateLimiter(maxBytesPerSecond));
 
                     //TODO consider SendFile interception
                     options.Tracer.AsVerbose("With configured limit forwarded.");
@@ -196,11 +279,11 @@
         /// number to specify infinite bandwidth.</param>
         /// <returns>The OWIN builder instance.</returns>
         /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxBandwidth(this BuildFunc builder, int maxBytesPerSecond)
+        public static BuildFunc MaxBandwidthPerRequest(this BuildFunc builder, int maxBytesPerSecond)
         {
             builder.MustNotNull("builder");
 
-            return MaxBandwidth(builder, () => maxBytesPerSecond);
+            return MaxBandwidthPerRequest(builder, () => maxBytesPerSecond);
         }
 
         /// <summary>
@@ -212,11 +295,11 @@
         /// <returns>The builder instance.</returns>
         /// <exception cref="System.ArgumentNullException">builder</exception>
         /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
-        public static BuildFunc MaxBandwidth(this BuildFunc builder, Func<int> getMaxBytesPerSecond)
+        public static BuildFunc MaxBandwidthPerRequest(this BuildFunc builder, Func<int> getMaxBytesPerSecond)
         {
             builder.MustNotNull("builder");
 
-            return MaxBandwidth(builder, new MaxBandwidthOptions(getMaxBytesPerSecond));
+            return MaxBandwidthPerRequest(builder, new MaxBandwidthOptions(getMaxBytesPerSecond));
         }
 
         /// <summary>
@@ -227,15 +310,124 @@
         /// <returns>The OWIN builder instance.</returns>
         /// <exception cref="System.ArgumentNullException">builder</exception>
         /// <exception cref="System.ArgumentNullException">options</exception>
-        public static BuildFunc MaxBandwidth(this BuildFunc builder, MaxBandwidthOptions options)
+        public static BuildFunc MaxBandwidthPerRequest(this BuildFunc builder, MaxBandwidthOptions options)
         {
             builder.MustNotNull("builder");
             options.MustNotNull("options");
 
-            builder(_ => MaxBandwidth(options));
+            builder(_ => MaxBandwidthPerRequest(options));
             return builder;
         }
 
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
+        /// number to specify infinite bandwidth.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc GlobalMaxBandwidth(int maxBytesPerSecond)
+        {
+            return GlobalMaxBandwidth(() => maxBytesPerSecond);
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
+        public static MidFunc GlobalMaxBandwidth(Func<int> getMaxBytesPerSecond)
+        {
+            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
+
+            return GlobalMaxBandwidth(new MaxBandwidthOptions(getMaxBytesPerSecond));
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="options">The max bandwidth options.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        /// <exception cref="System.ArgumentNullException">options</exception>
+        public static MidFunc GlobalMaxBandwidth(MaxBandwidthOptions options)
+        {
+            options.MustNotNull("options");
+
+            int maxBytesPerSecond = options.MaxBytesPerSecond;
+            if (maxBytesPerSecond < 0)
+            {
+                maxBytesPerSecond = 0;
+            }
+
+            var rateLimiter = new RateLimiter(maxBytesPerSecond);
+
+            return
+                next =>
+                env =>
+                {
+                    var context = new OwinContext(env);
+                    Stream requestBodyStream = context.Request.Body ?? Stream.Null;
+                    Stream responseBodyStream = context.Response.Body;
+
+                    options.Tracer.AsVerbose("Configure streams to be limited.");
+                    context.Request.Body = new ThrottledStream(requestBodyStream, rateLimiter);
+                    context.Response.Body = new ThrottledStream(responseBodyStream, rateLimiter);
+
+                    //TODO consider SendFile interception
+                    options.Tracer.AsVerbose("With configured limit forwarded.");
+                    return next(env);
+                };
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
+        /// number to specify infinite bandwidth.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        public static BuildFunc GlobalMaxBandwidth(this BuildFunc builder, int maxBytesPerSecond)
+        {
+            builder.MustNotNull("builder");
+
+            return GlobalMaxBandwidth(builder, () => maxBytesPerSecond);
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
+        /// <returns>The builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
+        public static BuildFunc GlobalMaxBandwidth(this BuildFunc builder, Func<int> getMaxBytesPerSecond)
+        {
+            builder.MustNotNull("builder");
+
+            return GlobalMaxBandwidth(builder, new MaxBandwidthOptions(getMaxBytesPerSecond));
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="options">The max bandwith options.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">options</exception>
+        public static BuildFunc GlobalMaxBandwidth(this BuildFunc builder, MaxBandwidthOptions options)
+        {
+            builder.MustNotNull("builder");
+            options.MustNotNull("options");
+
+            builder(_ => GlobalMaxBandwidth(options));
+            return builder;
+        }
+        
         /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>

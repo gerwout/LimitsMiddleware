@@ -10,7 +10,7 @@
     using Owin;
     using Xunit;
 
-    public class MaxBandwidthTests
+    public class MaxBandwidthPerRequestTests
     {
         [Fact]
         public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer()
@@ -18,15 +18,29 @@
             int bandwidth = 0;
             // ReSharper disable once AccessToModifiedClosure - yeah we want to modify it...
             Func<int> getMaxBandwidth = () => bandwidth;
-            HttpClient httpClient = CreateHttpClient(getMaxBandwidth);
-
             var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            await httpClient.GetAsync("http://example.com");
-            TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
 
-            bandwidth = 1; // ~1bps, should take ~3s
-            await httpClient.GetAsync("http://example.com");
+            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
+            {
+                stopwatch.Start();
+                
+                await httpClient.GetAsync("http://example.com");
+
+                stopwatch.Stop();
+            }
+
+            TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
+            bandwidth = 512;
+
+            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
+            {
+                stopwatch.Restart();
+
+                await httpClient.GetAsync("http://example.com");
+
+                stopwatch.Stop();
+            }
+
             TimeSpan limitedTimeSpan = stopwatch.Elapsed;
 
             Console.WriteLine(nolimitTimeSpan);
@@ -38,11 +52,11 @@
         private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond)
         {
             return TestServer.Create(builder => builder
-                .UseOwin().MaxBandwidth(getMaxBytesPerSecond)
+                .UseOwin().MaxBandwidthPerRequest(getMaxBytesPerSecond)
                 .UseAppBuilder(builder)
                 .Use(async (context, _) =>
                 {
-                    byte[] bytes = Enumerable.Repeat((byte) 0x1, 3).ToArray();
+                    byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
                     context.Response.ContentLength = bytes.LongLength;
