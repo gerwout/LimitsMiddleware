@@ -8,7 +8,7 @@
         [Fact]
         public void When_create_then_can_get_max_bytes_per_second()
         {
-            new MaxBandwidthOptions(1).MaxBytesPerSecond.Should().Be(1);
+            new MaxBandwidthOptions(1).GetMaxBytesPerSecond(null).Should().Be(1);
         }
     }
 }

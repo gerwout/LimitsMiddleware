@@ -46,6 +46,7 @@
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="App_Packages\LibOwin.1.0\LibOwin.cs" />
+    <Compile Include="MaxBandwidthGlobalOptions.cs" />
     <Compile Include="InterlockedBoolean.cs" />
     <Compile Include="InterlockedBooleanExtensions.cs" />
     <Compile Include="Limits.cs" />
