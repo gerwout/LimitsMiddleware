@@ -60,6 +60,7 @@
     <Compile Include="MaxQueryStringLengthOptions.cs" />
     <Compile Include="MaxRequestContentLengthOptions.cs" />
     <Compile Include="MaxUrlLengthOptions.cs" />
+    <Compile Include="MinResponseDelayOptions.cs" />
     <Compile Include="OptionsBase.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
