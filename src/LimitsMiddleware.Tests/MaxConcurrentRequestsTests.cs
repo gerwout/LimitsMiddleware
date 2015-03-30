@@ -1,5 +1,6 @@
 ﻿namespace LimitsMiddleware
 {
+    using System;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
@@ -51,7 +52,29 @@
             request2.Result.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
+        [Fact]
+        public async Task request_context_is_not_null()
+        {
+            bool requestContextIsNull = true;
+
+            using (var client = CreateHttpClient(context =>
+            {
+                requestContextIsNull = context == null;
+                return 1;
+            }))
+            {
+                await client.GetAsync("http://example.com");
+            }
+
+            requestContextIsNull.Should().BeFalse();
+        }
+
         private static HttpClient CreateHttpClient(int maxConcurrentRequests)
+        {
+            return CreateHttpClient(_ => maxConcurrentRequests);
+        }
+
+        private static HttpClient CreateHttpClient(Func<RequestContext, int> maxConcurrentRequests)
         {
             return TestServer.Create(builder => builder
                 .UseOwin().MaxBandwidth(1)
