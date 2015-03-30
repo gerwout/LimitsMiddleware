@@ -55,6 +55,21 @@
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
         /// write activity on the response body stream.
         /// </summary>
+        /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
+        /// to supply different values at runtime.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        /// <exception cref="System.ArgumentNullException">getTimeout</exception>
+        public static MidFunc ConnectionTimeout(Func<RequestContext, TimeSpan> getTimeout)
+        {
+            getTimeout.MustNotNull("getTimeout");
+
+            return ConnectionTimeout(new ConnectionTimeoutOptions(getTimeout));
+        }
+
+        /// <summary>
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
+        /// </summary>
         /// <param name="options">The connection timeout options.</param>
         /// <returns>An OWIN middleware delegate.</returns>
         /// <exception cref="System.ArgumentNullException">options</exception>
@@ -67,11 +82,13 @@
                 env =>
                 {
                     var context = new OwinContext(env);
+                    var limitsRequestContext = new RequestContext(context.Request);
+
                     Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                     Stream responseBodyStream = context.Response.Body;
 
                     options.Tracer.AsVerbose("Configure timeouts.");
-                    TimeSpan connectionTimeout = options.Timeout;
+                    TimeSpan connectionTimeout = options.GetTimeout(limitsRequestContext);
                     context.Request.Body = new TimeoutStream(requestBodyStream, connectionTimeout, options.Tracer);
                     context.Response.Body = new TimeoutStream(responseBodyStream, connectionTimeout, options.Tracer);
 
@@ -113,6 +130,23 @@
             return ConnectionTimeout(builder, new ConnectionTimeoutOptions(getTimeout));
         }
 
+        /// <summary>
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
+        /// to supply different values at runtime.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">getTimeout</exception>
+        public static BuildFunc ConnectionTimeout(this BuildFunc builder, Func<RequestContext, TimeSpan> getTimeout)
+        {
+            builder.MustNotNull("builder");
+            getTimeout.MustNotNull("getTimeout");
+
+            return ConnectionTimeout(builder, new ConnectionTimeoutOptions(getTimeout));
+        }
         /// <summary>
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
         /// write activity on the response body stream.
