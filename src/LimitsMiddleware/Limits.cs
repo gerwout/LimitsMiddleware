@@ -147,6 +147,7 @@
 
             return ConnectionTimeout(builder, new ConnectionTimeoutOptions(getTimeout));
         }
+
         /// <summary>
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
         /// write activity on the response body stream.
