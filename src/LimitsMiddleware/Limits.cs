@@ -769,6 +769,19 @@
         /// <summary>
         /// Limits the length of the request content.
         /// </summary>
+        /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        /// <exception cref="System.ArgumentNullException">getMaxContentLength</exception>
+        public static MidFunc MaxRequestContentLength(Func<RequestContext, int> getMaxContentLength)
+        {
+            getMaxContentLength.MustNotNull("getMaxContentLength");
+
+            return MaxRequestContentLength(new MaxRequestContentLengthOptions(getMaxContentLength));
+        }
+
+        /// <summary>
+        /// Limits the length of the request content.
+        /// </summary>
         /// <param name="options">The max request content lenght options.</param>
         /// <returns>An OWIN middleware delegate.</returns>
         /// <exception cref="System.ArgumentNullException">options</exception>
@@ -782,6 +795,7 @@
                 {
                     var context = new OwinContext(env);
                     IOwinRequest request = context.Request;
+                    var limitsRequestContext = new RequestContext(request);
                     string requestMethod = request.Method.Trim().ToUpper();
 
                     if (requestMethod == "GET" || requestMethod == "HEAD")
@@ -790,7 +804,7 @@
                         await next(env);
                         return;
                     }
-                    int maxContentLength = options.MaxContentLength;
+                    int maxContentLength = options.GetMaxContentLength(limitsRequestContext);
                     options.Tracer.AsVerbose("Max valid content length is {0}.", maxContentLength);
                     if (!IsChunkedRequest(request))
                     {
@@ -862,6 +876,22 @@
         /// <exception cref="System.ArgumentNullException">builder</exception>
         /// <exception cref="System.ArgumentNullException">getMaxContentLength</exception>
         public static BuildFunc MaxRequestContentLength(this BuildFunc builder, Func<int> getMaxContentLength)
+        {
+            builder.MustNotNull("builder");
+            getMaxContentLength.MustNotNull("getMaxContentLength");
+
+            return MaxRequestContentLength(builder, new MaxRequestContentLengthOptions(getMaxContentLength));
+        }
+
+        /// <summary>
+        /// Limits the length of the request content.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">getMaxContentLength</exception>
+        public static BuildFunc MaxRequestContentLength(this BuildFunc builder, Func<RequestContext, int> getMaxContentLength)
         {
             builder.MustNotNull("builder");
             getMaxContentLength.MustNotNull("getMaxContentLength");
