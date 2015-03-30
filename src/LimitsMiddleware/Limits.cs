@@ -475,6 +475,20 @@
         /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>
+        /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
+        /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        /// <exception cref="System.ArgumentNullException">getMaxConcurrentRequests</exception>
+        public static MidFunc MaxConcurrentRequests(Func<RequestContext, int> getMaxConcurrentRequests)
+        {
+            getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
+
+            return MaxConcurrentRequests(new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
+        }
+
+        /// <summary>
+        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
+        /// </summary>
         /// <param name="options">The max concurrent request options.</param>
         /// <returns>An OWIN middleware delegate.</returns>
         /// <exception cref="System.ArgumentNullException">options</exception>
@@ -487,7 +501,9 @@
                 next =>
                 async env =>
                 {
-                    int maxConcurrentRequests = options.MaxConcurrentRequests;
+                    var owinRequest = new OwinRequest(env);
+                    var limitsRequestContext = new RequestContext(owinRequest);
+                    int maxConcurrentRequests = options.GetMaxConcurrentRequests(limitsRequestContext);
                     if (maxConcurrentRequests <= 0)
                     {
                         maxConcurrentRequests = int.MaxValue;
@@ -541,6 +557,23 @@
         /// <exception cref="System.ArgumentNullException">builder</exception>
         /// <exception cref="System.ArgumentNullException">getMaxConcurrentRequests</exception>
         public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, Func<int> getMaxConcurrentRequests)
+        {
+            builder.MustNotNull("builder");
+            getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
+
+            return MaxConcurrentRequests(builder, new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
+        }
+
+        /// <summary>
+        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
+        /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">getMaxConcurrentRequests</exception>
+        public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, Func<RequestContext, int> getMaxConcurrentRequests)
         {
             builder.MustNotNull("builder");
             getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
