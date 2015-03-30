@@ -14,7 +14,7 @@ namespace LimitsMiddleware
         /// Initializes a new instance of the <see cref="MaxRequestContentLengthOptions"/> class.
         /// </summary>
         /// <param name="maxContentLength">Maximum length of the content.</param>
-        public MaxRequestContentLengthOptions(int maxContentLength) : this(() => maxContentLength)
+        public MaxRequestContentLengthOptions(int maxContentLength) : this(_ => maxContentLength)
         {}
 
         /// <summary>

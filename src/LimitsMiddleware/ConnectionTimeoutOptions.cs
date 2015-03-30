@@ -13,7 +13,7 @@ namespace LimitsMiddleware
         /// Initializes a new instance of the <see cref="ConnectionTimeoutOptions"/> class.
         /// </summary>
         /// <param name="timeout">The timeout.</param>
-        public ConnectionTimeoutOptions(TimeSpan timeout) : this(() => timeout)
+        public ConnectionTimeoutOptions(TimeSpan timeout) : this(_ => timeout)
         {}
 
         /// <summary>

@@ -14,7 +14,7 @@ namespace LimitsMiddleware
         /// </summary>
         /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
         /// number to specify infinite bandwidth.</param>
-        public MaxBandwidthOptions(int maxBytesPerSecond) : this(() => maxBytesPerSecond)
+        public MaxBandwidthOptions(int maxBytesPerSecond) : this(_ => maxBytesPerSecond)
         {}
 
         /// <summary>

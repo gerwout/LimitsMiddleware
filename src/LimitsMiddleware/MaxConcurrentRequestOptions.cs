@@ -15,7 +15,7 @@
         /// </summary>
         /// <param name="maxConcurrentRequests">The maximum number of concurrent requests. Use 0 or a negative
         /// number to specify unlimited number of concurrent requests.</param>
-        public MaxConcurrentRequestOptions(int maxConcurrentRequests) : this(() => maxConcurrentRequests)
+        public MaxConcurrentRequestOptions(int maxConcurrentRequests) : this(_ => maxConcurrentRequests)
         {}
 
         /// <summary>
