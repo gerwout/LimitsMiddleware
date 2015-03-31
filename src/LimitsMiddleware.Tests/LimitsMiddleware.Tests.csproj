@@ -86,6 +86,7 @@
     <Compile Include="MaxRequestContentLengthOptionsTests.cs" />
     <Compile Include="MaxUrlLengthOptionsTests.cs" />
     <Compile Include="MaxUrlLengthTests.cs" />
+    <Compile Include="MinResponseDelayMiddlewareTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

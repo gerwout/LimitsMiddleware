@@ -1021,6 +1021,229 @@
             return builder;
         }
 
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="minDelay">The min response delay, in milliseconds.</param>
+        /// <returns>A midfunc.</returns>
+        public static MidFunc MinResponseDelay(int minDelay)
+        {
+            return MinResponseDelay(new MinResponseDelayOptions(minDelay));
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="getMinDelay">A delegate to return the min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static MidFunc MinResponseDelay(Func<int> getMinDelay)
+        {
+            getMinDelay.MustNotNull("getMinDelay");
+
+            return MinResponseDelay(new MinResponseDelayOptions(getMinDelay));
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="getMinDelay">A delegate to return the min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static MidFunc MinResponseDelay(Func<RequestContext, int> getMinDelay)
+        {
+            getMinDelay.MustNotNull("getMinDelay");
+
+            return MinResponseDelay(new MinResponseDelayOptions(getMinDelay));
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="minDelay">The min response delay.</param>
+        /// <returns>A midfunc.</returns>
+        public static MidFunc MinResponseDelay(TimeSpan minDelay)
+        {
+            return MinResponseDelay(new MinResponseDelayOptions(minDelay));
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="getMinDelay">A delegate to return the min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static MidFunc MinResponseDelay(Func<TimeSpan> getMinDelay)
+        {
+            getMinDelay.MustNotNull("getMinDelay");
+
+            return MinResponseDelay(new MinResponseDelayOptions(getMinDelay));
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="getMinDelay">A delegate to return the min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static MidFunc MinResponseDelay(Func<RequestContext, TimeSpan> getMinDelay)
+        {
+            getMinDelay.MustNotNull("getMinDelay");
+
+            return MinResponseDelay(new MinResponseDelayOptions(getMinDelay));
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="options">The min response delay options.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">options</exception>
+        public static MidFunc MinResponseDelay(MinResponseDelayOptions options)
+        {
+            options.MustNotNull("options");
+
+            return
+                next =>
+                env =>
+                {
+                    var context = new OwinContext(env);
+                    var limitsRequestContext = new RequestContext(context.Request);
+                    var delay = options.GetMinDelay(limitsRequestContext);
+
+                    if (delay <= TimeSpan.Zero)
+                    {
+                        return next(env);
+                    }
+
+                    // using explicit continuation because async / await adds some overhead!
+                    return Task.Delay(delay, context.Request.CallCancelled)
+                        .ContinueWith(_ => next(env), context.Request.CallCancelled);
+                };
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="minDelay">The min response delay, in milliseconds.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        public static BuildFunc MinResponseDelay(this BuildFunc builder, int minDelay)
+        {
+            builder.MustNotNull("builder");
+
+            builder(_ => MinResponseDelay(minDelay));
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMinDelay">A delegate that returns the min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static BuildFunc MinResponseDelay(this BuildFunc builder, Func<int> getMinDelay)
+        {
+            builder.MustNotNull("builder");
+            getMinDelay.MustNotNull("getMinDelay");
+
+            builder(_ => MinResponseDelay(getMinDelay));
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMinDelay">A delegate that returns the min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static BuildFunc MinResponseDelay(this BuildFunc builder, Func<RequestContext, int> getMinDelay)
+        {
+            builder.MustNotNull("builder");
+            getMinDelay.MustNotNull("getMinDelay");
+
+            builder(_ => MinResponseDelay(getMinDelay));
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="minDelay">The min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        public static BuildFunc MinResponseDelay(this BuildFunc builder, TimeSpan minDelay)
+        {
+            builder.MustNotNull("builder");
+
+            builder(_ => MinResponseDelay(minDelay));
+
+            return builder;
+        }
+        
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMinDelay">A delegate that returns the min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static BuildFunc MinResponseDelay(this BuildFunc builder, Func<TimeSpan> getMinDelay)
+        {
+            builder.MustNotNull("builder");
+            getMinDelay.MustNotNull("getMinDelay");
+
+            builder(_ => MinResponseDelay(getMinDelay));
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="getMinDelay">A delegate that returns the min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static BuildFunc MinResponseDelay(this BuildFunc builder, Func<RequestContext, TimeSpan> getMinDelay)
+        {
+            builder.MustNotNull("builder");
+            getMinDelay.MustNotNull("getMinDelay");
+
+            builder(_ => MinResponseDelay(getMinDelay));
+
+            return builder;
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="builder">The OWIN builder instance.</param>
+        /// <param name="options">The min response delay options.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">builder</exception>
+        /// <exception cref="System.ArgumentNullException">options</exception>
+        public static BuildFunc MinResponseDelay(this BuildFunc builder, MinResponseDelayOptions options)
+        {
+            builder.MustNotNull("builder");
+            options.MustNotNull("options");
+
+            builder(_ => MinResponseDelay(options));
+
+            return builder;
+        }
+
         private static bool IsChunkedRequest(IOwinRequest request)
         {
             string header = request.Headers.Get("Transfer-Encoding");
