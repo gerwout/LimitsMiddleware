@@ -56,8 +56,7 @@
         {
             reasonPhrase = reasonPhrase ?? string.Empty;
             return TestServer.Create(builder => builder
-                .UseOwin().MaxQueryStringLength(new MaxQueryStringLengthOptions(length) {LimitReachedReasonPhrase = code => reasonPhrase})
-                .UseAppBuilder(builder)
+                .MaxQueryStringLength(new MaxQueryStringLengthOptions(length) {LimitReachedReasonPhrase = code => reasonPhrase})
                 .Use((context, next) =>
                 {
                     context.Response.StatusCode = 200;

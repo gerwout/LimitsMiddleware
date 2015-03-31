@@ -56,7 +56,7 @@
     <Compile Include="ContentLengthLimitingStream.cs" />
     <Compile Include="DefaultDelegateHelper.cs" />
     <Compile Include="Guard.cs" />
-    <Compile Include="MaxBandwidthOptions.cs" />
+    <Compile Include="MaxBandwidthPerRequestOptions.cs" />
     <Compile Include="MaxConcurrentRequestOptions.cs" />
     <Compile Include="MaxQueryStringLengthOptions.cs" />
     <Compile Include="MaxRequestContentLengthOptions.cs" />

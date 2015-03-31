@@ -10,7 +10,7 @@ namespace LimitsMiddleware
         private readonly Func<int> _getMaxBytesPerSecond;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MaxBandwidthOptions"/> class.
+        /// Initializes a new instance of the <see cref="MaxBandwidthPerRequestOptions"/> class.
         /// </summary>
         /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
         /// number to specify infinite bandwidth.</param>
@@ -19,7 +19,7 @@ namespace LimitsMiddleware
         }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="MaxBandwidthOptions"/> class.
+        /// Initializes a new instance of the <see cref="MaxBandwidthPerRequestOptions"/> class.
         /// </summary>
         /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>

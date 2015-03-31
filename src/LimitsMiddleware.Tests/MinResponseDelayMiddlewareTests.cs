@@ -2,7 +2,6 @@
 {
     using System;
     using System.Diagnostics;
-    using System.Linq;
     using System.Net.Http;
     using System.Threading.Tasks;
     using FluentAssertions;
@@ -45,8 +44,7 @@
         private static HttpClient CreateHttpClient(Func<TimeSpan> getMinDelay)
         {
             return TestServer.Create(builder => builder
-                .UseOwin().MinResponseDelay(getMinDelay)
-                .UseAppBuilder(builder)
+                .MinResponseDelay(getMinDelay)
                 .Use((context, _) =>
                 {
                     context.Response.StatusCode = 200;

@@ -8,303 +8,315 @@
         System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
         System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
         >;
-    using BuildFunc = System.Action<
-        System.Func<
-            System.Collections.Generic.IDictionary<string, object>,
-            System.Func<
-                System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
-                System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
-        >>>;
 
     /// <summary>
     /// Represents a set of extension methods around <see cref="IAppBuilder"/> that expose limits middleware.
     /// </summary>
-    public static class AppBuilderExtensions
+    public static partial class AppBuilderExtensions
     {
         /// <summary>
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
         /// write activity on the response body stream.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="timeout">The timeout.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder ConnectionTimeout(this IAppBuilder builder, TimeSpan timeout)
+        public static IAppBuilder ConnectionTimeout(this IAppBuilder app, TimeSpan timeout)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
 
-            return ConnectionTimeout(builder, () => timeout);
+            return ConnectionTimeout(app, () => timeout);
         }
 
         /// <summary>
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
         /// write activity on the response body stream.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
         /// to supply different values at runtime.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder ConnectionTimeout(this IAppBuilder builder, Func<TimeSpan> getTimeout)
+        public static IAppBuilder ConnectionTimeout(this IAppBuilder app, Func<TimeSpan> getTimeout)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
             getTimeout.MustNotNull("getTimeout");
 
-            return ConnectionTimeout(builder, new ConnectionTimeoutOptions(getTimeout));
+            return ConnectionTimeout(app, new ConnectionTimeoutOptions(getTimeout));
         }
 
         /// <summary>
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
         /// write activity on the response body stream.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="options">The connection timeout options.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static IAppBuilder ConnectionTimeout(this IAppBuilder builder, ConnectionTimeoutOptions options)
+        /// <exception cref="System.ArgumentNullException">app</exception>
+        public static IAppBuilder ConnectionTimeout(this IAppBuilder app, ConnectionTimeoutOptions options)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
             options.MustNotNull("options");
 
-            builder
-                .UseOwin()
-                .ConnectionTimeout(options);
+            app.Use(Limits.ConnectionTimeout(options));
 
-            return builder;
+            return app;
+        }
+
+        /// <summary>
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
+        /// </summary>
+        /// <param name="app">The IAppBuilder instance.</param>
+        /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
+        /// to supply different values at runtime.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        /// <exception cref="System.ArgumentNullException">getTimeout</exception>
+        public static IAppBuilder ConnectionTimeout(this IAppBuilder app, Func<RequestContext, TimeSpan> getTimeout)
+        {
+            app.MustNotNull("app");
+            getTimeout.MustNotNull("getTimeout");
+
+            app.Use(Limits.ConnectionTimeout(getTimeout));
+
+            return app;
         }
 
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
         /// number to specify infinite bandwidth.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder MaxBandwidth(this IAppBuilder builder, int maxBytesPerSecond)
+        public static IAppBuilder MaxBandwidthPerRequest(this IAppBuilder app, int maxBytesPerSecond)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
 
-            return MaxBandwidth(builder, () => maxBytesPerSecond);
+            return MaxBandwidthPerRequest(app, () => maxBytesPerSecond);
         }
 
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
-        /// <returns>The builder instance.</returns>
-        public static IAppBuilder MaxBandwidth(this IAppBuilder builder, Func<int> getMaxBytesPerSecond)
+        /// <returns>The app instance.</returns>
+        public static IAppBuilder MaxBandwidthPerRequest(this IAppBuilder app, Func<int> getMaxBytesPerSecond)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
 
-            return MaxBandwidth(builder, new MaxBandwidthOptions(getMaxBytesPerSecond));
+            return MaxBandwidthPerRequest(app, new MaxBandwidthPerRequestOptions(getMaxBytesPerSecond));
         }
 
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
-        /// <param name="options">The max bandwith options.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
+        /// <param name="perRequestOptions">The max bandwith options.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static IAppBuilder MaxBandwidth(this IAppBuilder builder, MaxBandwidthOptions options)
+        /// <exception cref="System.ArgumentNullException">app</exception>
+        public static IAppBuilder MaxBandwidthPerRequest(this IAppBuilder app, MaxBandwidthPerRequestOptions perRequestOptions)
         {
-            builder.MustNotNull("builder");
-            options.MustNotNull("options");
+            app.MustNotNull("app");
+            perRequestOptions.MustNotNull("options");
 
-            builder
-                .UseOwin()
-                .MaxBandwidth(options);
-            return builder;
+            app.Use(Limits.MaxBandwidthPerRequest(perRequestOptions));
+            return app;
+        }
+
+        /// <summary>
+        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// </summary>
+        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        /// <exception cref="System.ArgumentNullException">app</exception>
+        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
+        public static IAppBuilder MaxBandwidthPerRequest(this IAppBuilder app, Func<RequestContext, int> getMaxBytesPerSecond)
+        {
+            app.MustNotNull("app");
+            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
+
+            app.Use(Limits.MaxBandwidthPerRequest(getMaxBytesPerSecond));
+            return app;
         }
 
         /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="maxConcurrentRequests">The maximum number of concurrent requests. Use 0 or a negative
         /// number to specify unlimited number of concurrent requests.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder MaxConcurrentRequests(this IAppBuilder builder, int maxConcurrentRequests)
+        public static IAppBuilder MaxConcurrentRequests(this IAppBuilder app, int maxConcurrentRequests)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
 
-            return MaxConcurrentRequests(builder, () => maxConcurrentRequests);
+            return MaxConcurrentRequests(app, () => maxConcurrentRequests);
         }
 
         /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
         /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder MaxConcurrentRequests(this IAppBuilder builder, Func<int> getMaxConcurrentRequests)
+        public static IAppBuilder MaxConcurrentRequests(this IAppBuilder app, Func<int> getMaxConcurrentRequests)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
             getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
 
-            return MaxConcurrentRequests(builder, new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
+            return MaxConcurrentRequests(app, new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
         }
 
         /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="options">The max concurrent request options.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static IAppBuilder MaxConcurrentRequests(this IAppBuilder builder, MaxConcurrentRequestOptions options)
+        /// <exception cref="System.ArgumentNullException">app</exception>
+        public static IAppBuilder MaxConcurrentRequests(this IAppBuilder app, MaxConcurrentRequestOptions options)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
             options.MustNotNull("options");
 
-            builder
-               .UseOwin()
-               .MaxConcurrentRequests(options);
+            app.Use(Limits.MaxConcurrentRequests(options));
 
-            return builder;
+            return app;
         }
 
         /// <summary>
         /// Limits the length of the query string.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="maxQueryStringLength">Maximum length of the query string.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder MaxQueryStringLength(this IAppBuilder builder, int maxQueryStringLength)
+        public static IAppBuilder MaxQueryStringLength(this IAppBuilder app, int maxQueryStringLength)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
 
-            return MaxQueryStringLength(builder, () => maxQueryStringLength);
+            return MaxQueryStringLength(app, () => maxQueryStringLength);
         }
 
         /// <summary>
         /// Limits the length of the query string.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="getMaxQueryStringLength">A delegate to get the maximum query string length.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder MaxQueryStringLength(this IAppBuilder builder, Func<int> getMaxQueryStringLength)
+        public static IAppBuilder MaxQueryStringLength(this IAppBuilder app, Func<int> getMaxQueryStringLength)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
             getMaxQueryStringLength.MustNotNull("getMaxQueryStringLength");
 
-            return MaxQueryStringLength(builder, new MaxQueryStringLengthOptions(getMaxQueryStringLength));
+            return MaxQueryStringLength(app, new MaxQueryStringLengthOptions(getMaxQueryStringLength));
         }
 
         /// <summary>
         /// Limits the length of the query string.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="options">The max querystring length options.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static IAppBuilder MaxQueryStringLength(this IAppBuilder builder, MaxQueryStringLengthOptions options)
+        /// <exception cref="System.ArgumentNullException">app</exception>
+        public static IAppBuilder MaxQueryStringLength(this IAppBuilder app, MaxQueryStringLengthOptions options)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
             options.MustNotNull("options");
 
-            builder
-               .UseOwin()
-               .MaxQueryStringLength(options);
+            app.Use(Limits.MaxQueryStringLength(options));
 
-            return builder;
+            return app;
         }
 
         /// <summary>
         /// Limits the length of the request content.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="maxContentLength">Maximum length of the content.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder MaxRequestContentLength(this IAppBuilder builder, int maxContentLength)
+        public static IAppBuilder MaxRequestContentLength(this IAppBuilder app, int maxContentLength)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
 
-            return MaxRequestContentLength(builder, () => maxContentLength);
+            return MaxRequestContentLength(app, () => maxContentLength);
         }
 
         /// <summary>
         /// Limits the length of the request content.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder MaxRequestContentLength(this IAppBuilder builder, Func<int> getMaxContentLength)
+        public static IAppBuilder MaxRequestContentLength(this IAppBuilder app, Func<int> getMaxContentLength)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
             getMaxContentLength.MustNotNull("getMaxContentLength");
 
-            return MaxRequestContentLength(builder, new MaxRequestContentLengthOptions(getMaxContentLength));
+            return MaxRequestContentLength(app, new MaxRequestContentLengthOptions(getMaxContentLength));
         }
 
         /// <summary>
         /// Limits the length of the request content.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="options">The max request content length options.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static IAppBuilder MaxRequestContentLength(this IAppBuilder builder, MaxRequestContentLengthOptions options)
+        /// <exception cref="System.ArgumentNullException">app</exception>
+        public static IAppBuilder MaxRequestContentLength(this IAppBuilder app, MaxRequestContentLengthOptions options)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
             options.MustNotNull("options");
 
-            builder
-               .UseOwin()
-               .MaxRequestContentLength(options);
+            app.Use(Limits.MaxRequestContentLength(options));
 
-            return builder;
+            return app;
         }
 
         /// <summary>
         /// Limits the length of the URL.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="maxUrlLength">Maximum length of the URL.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder MaxUrlLength(this IAppBuilder builder, int maxUrlLength)
+        public static IAppBuilder MaxUrlLength(this IAppBuilder app, int maxUrlLength)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
 
-            return MaxUrlLength(builder, () => maxUrlLength);
+            return MaxUrlLength(app, () => maxUrlLength);
         }
 
         /// <summary>
         /// Limits the length of the URL.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="getMaxUrlLength">A delegate to get the maximum URL length.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        public static IAppBuilder MaxUrlLength(this IAppBuilder builder, Func<int> getMaxUrlLength)
+        public static IAppBuilder MaxUrlLength(this IAppBuilder app, Func<int> getMaxUrlLength)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
             getMaxUrlLength.MustNotNull("getMaxUrlLength");
 
-            return MaxUrlLength(builder, new MaxUrlLengthOptions(getMaxUrlLength));
+            return MaxUrlLength(app, new MaxUrlLengthOptions(getMaxUrlLength));
         }
 
         /// <summary>
         /// Limits the length of the URL.
         /// </summary>
-        /// <param name="builder">The IAppBuilder instance.</param>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="options">The max url length options.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static IAppBuilder MaxUrlLength(this IAppBuilder builder, MaxUrlLengthOptions options)
+        /// <exception cref="System.ArgumentNullException">app</exception>
+        public static IAppBuilder MaxUrlLength(this IAppBuilder app, MaxUrlLengthOptions options)
         {
-            builder.MustNotNull("builder");
+            app.MustNotNull("app");
             options.MustNotNull("options");
 
-            builder
-                .UseOwin()
-                .MaxUrlLength(options);
-            return builder;
-        }
-
-        private static BuildFunc UseOwin(this IAppBuilder builder)
-        {
-            return middleware => builder.Use(middleware(builder.Properties));
+            app.Use(Limits.MaxUrlLength(options));
+            return app;
         }
     }
 }

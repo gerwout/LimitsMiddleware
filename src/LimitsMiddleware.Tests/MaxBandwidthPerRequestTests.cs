@@ -74,8 +74,7 @@
         private static HttpClient CreateHttpClient(Func<RequestContext, int> getMaxBytesPerSecond)
         {
             return TestServer.Create(builder => builder
-                .UseOwin().MaxBandwidthPerRequest(getMaxBytesPerSecond)
-                .UseAppBuilder(builder)
+                .MaxBandwidthPerRequest(getMaxBytesPerSecond)
                 .Use(async (context, _) =>
                 {
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();

@@ -14,14 +14,14 @@
         /// </summary>
         /// <param name="minDelay">The delay, in milliseconds</param>
         public MinResponseDelayOptions(int minDelay)
-            : this(TimeSpan.FromSeconds(minDelay))
+            : this(TimeSpan.FromMilliseconds(minDelay))
         {
         }
 
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="getMinDelay">returns the delay, in miliseconds</param>
+        /// <param name="getMinDelay">returns the delay, in milliseconds</param>
         public MinResponseDelayOptions(Func<int> getMinDelay)
             : this(_ => TimeSpan.FromMilliseconds(getMinDelay()))
         {
@@ -30,7 +30,7 @@
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="getMinDelay">returns the delay, in miliseconds</param>
+        /// <param name="getMinDelay">returns the delay, in milliseconds</param>
         public MinResponseDelayOptions(Func<RequestContext, int> getMinDelay)
             : this(context => TimeSpan.FromMilliseconds(getMinDelay(context)))
         {

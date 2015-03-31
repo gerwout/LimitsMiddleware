@@ -76,7 +76,6 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="AppBuilderExtensions.cs" />
     <Compile Include="ConnectionTimeoutOptionsTests.cs" />
     <Compile Include="ConnectionTimeoutTests.cs" />
     <Compile Include="MaxBandwidthGlobalTests.cs" />
@@ -100,6 +99,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\LimitsMiddleware.OwinAppBuilder\LimitsMiddleware.OwinAppBuilder.csproj">
+      <Project>{833bc4e3-7bc7-4fc8-ac68-6fe8b9b127b7}</Project>
+      <Name>LimitsMiddleware.OwinAppBuilder</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LimitsMiddleware\LimitsMiddleware.csproj">
       <Project>{757a5abf-f560-416d-8494-c7a2c6f8e1ef}</Project>
       <Name>LimitsMiddleware</Name>
