@@ -1,5 +1,6 @@
 ﻿namespace LimitsMiddleware
 {
+    using System;
     using System.Globalization;
     using System.IO;
     using System.Net;
@@ -155,11 +156,30 @@
             response.StatusCode.Should().Be(HttpStatusCode.RequestEntityTooLarge);
         }
 
+        [Fact]
+        public async Task request_context_is_not_null()
+        {
+            bool requestContextIsNull = true;
+            RequestBuilder requestBuilder = CreateRequest(context =>
+            {
+                requestContextIsNull = context == null;
+                return 20;
+            });
+
+            await requestBuilder.PostAsync();
+
+            requestContextIsNull.Should().BeFalse();
+        }
 
         private static RequestBuilder CreateRequest(int maxContentLength)
         {
+            return CreateRequest(_ => maxContentLength);
+        }
+
+        private static RequestBuilder CreateRequest(Func<RequestContext, int> getMaxContentLength)
+        {
             TestServer server = TestServer.Create(builder => builder
-                .UseOwin().MaxRequestContentLength(new MaxRequestContentLengthOptions(maxContentLength)
+                .UseOwin().MaxRequestContentLength(new MaxRequestContentLengthOptions(getMaxContentLength)
                 {
                     LimitReachedReasonPhrase = code => "custom phrase"
                 })
@@ -174,7 +194,9 @@
             RequestBuilder request = server.CreateRequest("http://example.com");
 
             return request;
+            
         }
+
 
         private static void AddContentLengthHeader(RequestBuilder request, int contentLengthValue)
         {

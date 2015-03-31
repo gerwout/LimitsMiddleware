@@ -7,14 +7,14 @@ namespace LimitsMiddleware
     /// </summary>
     public class MaxRequestContentLengthOptions : OptionsBase
     {
-        private readonly Func<int> _getMaxContentLength;
+        private readonly Func<RequestContext, int> _getMaxContentLength;
         private Func<int, string> _limitReachedReasonPhrase;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MaxRequestContentLengthOptions"/> class.
         /// </summary>
         /// <param name="maxContentLength">Maximum length of the content.</param>
-        public MaxRequestContentLengthOptions(int maxContentLength) : this(() => maxContentLength)
+        public MaxRequestContentLengthOptions(int maxContentLength) : this(_ => maxContentLength)
         {}
 
         /// <summary>
@@ -22,6 +22,15 @@ namespace LimitsMiddleware
         /// </summary>
         /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
         public MaxRequestContentLengthOptions(Func<int> getMaxContentLength)
+            : this(_ => getMaxContentLength())
+        {
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="MaxRequestContentLengthOptions"/> class.
+        /// </summary>
+        /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
+        public MaxRequestContentLengthOptions(Func<RequestContext, int> getMaxContentLength)
         {
             getMaxContentLength.MustNotNull("getMaxContentLength");
 
@@ -31,9 +40,20 @@ namespace LimitsMiddleware
         /// <summary>
         /// The maximum content length
         /// </summary>
+        [Obsolete("Use GetMaxContentLength instead.", true)]
         public int MaxContentLength
         {
-            get { return _getMaxContentLength(); }
+            get { throw new NotSupportedException(); }
+        }
+
+        /// <summary>
+        /// Gets the maximum content length.
+        /// </summary>
+        /// <param name="requestContext">The <see cref="RequestContext"/>.</param>
+        /// <returns>The maximum content length, in bytes.</returns>
+        public int GetMaxContentLength(RequestContext requestContext)
+        {
+            return _getMaxContentLength(requestContext);
         }
 
         /// <summary>

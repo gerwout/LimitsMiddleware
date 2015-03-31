@@ -8,7 +8,7 @@
         [Fact]
         public void When_create_then_can_get_max_request_content_length()
         {
-            new MaxRequestContentLengthOptions(1).MaxContentLength.Should().Be(1);
+            new MaxRequestContentLengthOptions(1).GetMaxContentLength(null).Should().Be(1);
         }
     }
 }

@@ -6,10 +6,9 @@
 
     internal class RateLimiter
     {
-        private const long Infinite = 0;
-        private readonly long _maximumBytesPerSecond;
+        private readonly Func<int> _getMaxBytesPerSecond;
         private long _byteCount;
-        private long _start;
+        private readonly long _start;
         private readonly InterlockedBoolean _resetting;
 
         private long CurrentMilliseconds
@@ -17,17 +16,10 @@
             get { return Environment.TickCount; }
         }
 
-        public RateLimiter(long maximumBytesPerSecond = Infinite)
+        public RateLimiter(Func<int> getMaxBytesPerSecond)
         {
-            if (maximumBytesPerSecond < 0)
-            {
-                throw new ArgumentOutOfRangeException(
-                    "maximumBytesPerSecond",
-                    maximumBytesPerSecond,
-                    "The maximum number of bytes per second can't be negative.");
-            }
+            _getMaxBytesPerSecond = getMaxBytesPerSecond;
 
-            _maximumBytesPerSecond = maximumBytesPerSecond;
             _start = CurrentMilliseconds;
             _byteCount = 0;
             _resetting = new InterlockedBoolean();
@@ -36,7 +28,9 @@
         public async Task Throttle(int bufferSizeInBytes)
         {
             // Make sure the buffer isn't empty.
-            if (_maximumBytesPerSecond <= 0 || bufferSizeInBytes <= 0)
+            int maximumBytesPerSecond = _getMaxBytesPerSecond();
+
+            if (maximumBytesPerSecond <= 0 || bufferSizeInBytes <= 0)
             {
                 return;
             }
@@ -49,10 +43,10 @@
                 long bps = elapsedMilliseconds == 0 ? long.MaxValue : _byteCount / (elapsedMilliseconds * 1000L);
 
                 // If the bps are more then the maximum bps, try to throttle.
-                if (bps > _maximumBytesPerSecond)
+                if (bps > maximumBytesPerSecond)
                 {
                     // Calculate the time to sleep.
-                    long wakeElapsed = _byteCount / _maximumBytesPerSecond;
+                    long wakeElapsed = _byteCount / maximumBytesPerSecond;
                     var toSleep = (wakeElapsed*1000L) - elapsedMilliseconds;
 
                     if (toSleep > 1)
