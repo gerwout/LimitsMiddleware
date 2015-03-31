@@ -11,7 +11,7 @@
     public static partial class AppBuilderExtensions
     {
         /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// Limits the bandwith used globally by the subsequent stages in the owin pipeline.
         /// </summary>
         /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
@@ -25,7 +25,7 @@
         }
 
         /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
+        /// Limits the bandwith used globally by the subsequent stages in the owin pipeline.
         /// </summary>
         /// <param name="app">The IAppBuilder instance.</param>
         /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
