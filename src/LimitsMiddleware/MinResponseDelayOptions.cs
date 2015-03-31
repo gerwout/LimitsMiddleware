@@ -7,7 +7,7 @@
     /// </summary>
     public class MinResponseDelayOptions : OptionsBase
     {
-        private readonly Func<TimeSpan> _getMinDelay;
+        private readonly Func<RequestContext, TimeSpan> _getMinDelay;
 
         /// <summary>
         /// 
@@ -23,7 +23,16 @@
         /// </summary>
         /// <param name="getMinDelay">returns the delay, in miliseconds</param>
         public MinResponseDelayOptions(Func<int> getMinDelay)
-            : this(() => TimeSpan.FromMilliseconds(getMinDelay()))
+            : this(_ => TimeSpan.FromMilliseconds(getMinDelay()))
+        {
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="getMinDelay">returns the delay, in miliseconds</param>
+        public MinResponseDelayOptions(Func<RequestContext, int> getMinDelay)
+            : this(context => TimeSpan.FromMilliseconds(getMinDelay(context)))
         {
         }
 
@@ -32,7 +41,7 @@
         /// </summary>
         /// <param name="minDelay">The delay</param>
         public MinResponseDelayOptions(TimeSpan minDelay)
-            : this(() => minDelay)
+            : this(_ => minDelay)
         {
         }
 
@@ -41,6 +50,15 @@
         /// </summary>
         /// <param name="getMinDelay">returns the delay</param>
         public MinResponseDelayOptions(Func<TimeSpan> getMinDelay)
+            : this(_ => getMinDelay())
+        {
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="getMinDelay">returns the delay</param>
+        public MinResponseDelayOptions(Func<RequestContext, TimeSpan> getMinDelay)
         {
             getMinDelay.MustNotNull("getMinDelay");
 
@@ -50,9 +68,9 @@
         /// <summary>
         /// Returns the minimum delay.
         /// </summary>
-        public TimeSpan MinDelay
+        public TimeSpan GetMinDelay(RequestContext requestContext)
         {
-            get { return _getMinDelay(); }
+            return _getMinDelay(requestContext);
         }
     }
 }
