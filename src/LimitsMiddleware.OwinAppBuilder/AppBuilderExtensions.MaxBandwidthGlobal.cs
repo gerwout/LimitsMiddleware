@@ -35,22 +35,7 @@
         {
             app.MustNotNull("app");
 
-            return MaxBandwidthGlobal(app, new MaxBandwidthGlobalOptions(getMaxBytesPerSecond));
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="app">The IAppBuilder instance.</param>
-        /// <param name="perRequestOptions">The max bandwith options.</param>
-        /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">app</exception>
-        public static IAppBuilder MaxBandwidthGlobal(this IAppBuilder app, MaxBandwidthGlobalOptions perRequestOptions)
-        {
-            app.MustNotNull("app");
-            perRequestOptions.MustNotNull("options");
-
-            app.Use(Limits.MaxBandwidthGlobal(perRequestOptions));
+            app.Use(Limits.MaxBandwidthGlobal(getMaxBytesPerSecond));
             return app;
         }
     }

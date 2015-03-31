@@ -83,7 +83,7 @@
         }
 
         [Fact]
-        public async Task When_max_contentLength_is_20_and_a_put_with_contentLength_21_is_coming_it_should_be_rejected_with_custom_reasonPhrase()
+        public async Task When_max_contentLength_is_20_and_a_put_with_contentLength_21_is_coming_it_should_be_rejected()
         {
             RequestBuilder requestBuilder = CreateRequest(20);
             requestBuilder.And(req => AddContent(req, 21));
@@ -92,7 +92,6 @@
             HttpResponseMessage response = await requestBuilder.SendAsync("PUT");
 
             response.StatusCode.Should().Be(HttpStatusCode.RequestEntityTooLarge);
-            response.ReasonPhrase.Should().Be("custom phrase");
         }
 
         [Fact]
@@ -179,10 +178,7 @@
         private static RequestBuilder CreateRequest(Func<RequestContext, int> getMaxContentLength)
         {
             TestServer server = TestServer.Create(builder => builder
-                .MaxRequestContentLength(new MaxRequestContentLengthOptions(getMaxContentLength)
-                {
-                    LimitReachedReasonPhrase = code => "custom phrase"
-                })
+                .MaxRequestContentLength(getMaxContentLength)
                 .Use(async (context, _) =>
                 {
                     await new StreamReader(context.Request.Body).ReadToEndAsync();

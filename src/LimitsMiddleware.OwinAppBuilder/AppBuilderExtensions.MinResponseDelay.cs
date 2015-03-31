@@ -35,7 +35,8 @@
         {
             app.MustNotNull("app");
 
-            return MinResponseDelay(app, new MinResponseDelayOptions(getMinDelay));
+            app.Use(Limits.MinResponseDelay(getMinDelay));
+            return app;
         }
 
         /// <summary>
@@ -49,23 +50,7 @@
         {
             app.MustNotNull("app");
 
-            return MinResponseDelay(app, new MinResponseDelayOptions(getMinDelay));
-        }
-
-        /// <summary>
-        /// Sets a minimum delay before sending the response.
-        /// </summary>
-        /// <param name="options">The min response delay options.</param>
-        /// <param name="app">The IAppBuilder instance.</param>
-        /// <param name="perRequestOptions">The max bandwith options.</param>
-        /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">app</exception>
-        public static IAppBuilder MinResponseDelay(this IAppBuilder app, MinResponseDelayOptions perRequestOptions)
-        {
-            app.MustNotNull("app");
-            perRequestOptions.MustNotNull("options");
-
-            app.Use(Limits.MinResponseDelay(perRequestOptions));
+            app.Use(Limits.MinResponseDelay(getMinDelay));
             return app;
         }
     }

@@ -47,21 +47,13 @@
     </Compile>
     <Compile Include="App_Packages\LibLog.3.1\LibLog.cs" />
     <Compile Include="App_Packages\LibOwin.1.0\LibOwin.cs" />
-    <Compile Include="MaxBandwidthGlobalOptions.cs" />
     <Compile Include="InterlockedBoolean.cs" />
     <Compile Include="InterlockedBooleanExtensions.cs" />
     <Compile Include="Limits.cs" />
-    <Compile Include="ConnectionTimeoutOptions.cs" />
     <Compile Include="ContentLengthExceededException.cs" />
     <Compile Include="ContentLengthLimitingStream.cs" />
     <Compile Include="DefaultDelegateHelper.cs" />
     <Compile Include="Guard.cs" />
-    <Compile Include="MaxBandwidthPerRequestOptions.cs" />
-    <Compile Include="MaxConcurrentRequestOptions.cs" />
-    <Compile Include="MaxQueryStringLengthOptions.cs" />
-    <Compile Include="MaxRequestContentLengthOptions.cs" />
-    <Compile Include="MaxUrlLengthOptions.cs" />
-    <Compile Include="MinResponseDelayOptions.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RateLimiter.cs" />

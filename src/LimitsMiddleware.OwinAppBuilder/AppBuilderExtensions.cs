@@ -25,7 +25,9 @@
         {
             app.MustNotNull("app");
 
-            return ConnectionTimeout(app, () => timeout);
+            app.Use(Limits.ConnectionTimeout(timeout));
+
+            return app;
         }
 
         /// <summary>
@@ -41,26 +43,11 @@
             app.MustNotNull("app");
             getTimeout.MustNotNull("getTimeout");
 
-            return ConnectionTimeout(app, new ConnectionTimeoutOptions(getTimeout));
-        }
-
-        /// <summary>
-        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
-        /// write activity on the response body stream.
-        /// </summary>
-        /// <param name="app">The IAppBuilder instance.</param>
-        /// <param name="options">The connection timeout options.</param>
-        /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">app</exception>
-        public static IAppBuilder ConnectionTimeout(this IAppBuilder app, ConnectionTimeoutOptions options)
-        {
-            app.MustNotNull("app");
-            options.MustNotNull("options");
-
-            app.Use(Limits.ConnectionTimeout(options));
+            app.Use(Limits.ConnectionTimeout(getTimeout));
 
             return app;
         }
+
 
         /// <summary>
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
@@ -106,22 +93,7 @@
         {
             app.MustNotNull("app");
 
-            return MaxBandwidthPerRequest(app, new MaxBandwidthPerRequestOptions(getMaxBytesPerSecond));
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="app">The IAppBuilder instance.</param>
-        /// <param name="perRequestOptions">The max bandwith options.</param>
-        /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">app</exception>
-        public static IAppBuilder MaxBandwidthPerRequest(this IAppBuilder app, MaxBandwidthPerRequestOptions perRequestOptions)
-        {
-            app.MustNotNull("app");
-            perRequestOptions.MustNotNull("options");
-
-            app.Use(Limits.MaxBandwidthPerRequest(perRequestOptions));
+            app.Use(Limits.MaxBandwidthPerRequest(getMaxBytesPerSecond));
             return app;
         }
 
@@ -131,6 +103,7 @@
         /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
+        /// <param name="app">The IAppBuilder instance.</param>
         /// <exception cref="System.ArgumentNullException">app</exception>
         /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
         public static IAppBuilder MaxBandwidthPerRequest(this IAppBuilder app, Func<RequestContext, int> getMaxBytesPerSecond)
@@ -168,22 +141,24 @@
             app.MustNotNull("app");
             getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
 
-            return MaxConcurrentRequests(app, new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
+            app.Use(Limits.MaxConcurrentRequests(getMaxConcurrentRequests));
+
+            return app;
         }
 
         /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>
         /// <param name="app">The IAppBuilder instance.</param>
-        /// <param name="options">The max concurrent request options.</param>
+        /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
+        /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">app</exception>
-        public static IAppBuilder MaxConcurrentRequests(this IAppBuilder app, MaxConcurrentRequestOptions options)
+        public static IAppBuilder MaxConcurrentRequests(this IAppBuilder app, Func<RequestContext, int> getMaxConcurrentRequests)
         {
             app.MustNotNull("app");
-            options.MustNotNull("options");
+            getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
 
-            app.Use(Limits.MaxConcurrentRequests(options));
+            app.Use(Limits.MaxConcurrentRequests(getMaxConcurrentRequests));
 
             return app;
         }
@@ -212,22 +187,24 @@
             app.MustNotNull("app");
             getMaxQueryStringLength.MustNotNull("getMaxQueryStringLength");
 
-            return MaxQueryStringLength(app, new MaxQueryStringLengthOptions(getMaxQueryStringLength));
+            app.Use(Limits.MaxQueryStringLength(getMaxQueryStringLength));
+
+            return app;
         }
+
 
         /// <summary>
         /// Limits the length of the query string.
         /// </summary>
         /// <param name="app">The IAppBuilder instance.</param>
-        /// <param name="options">The max querystring length options.</param>
+        /// <param name="getMaxQueryStringLength">A delegate to get the maximum query string length.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">app</exception>
-        public static IAppBuilder MaxQueryStringLength(this IAppBuilder app, MaxQueryStringLengthOptions options)
+        public static IAppBuilder MaxQueryStringLength(this IAppBuilder app, Func<RequestContext, int> getMaxQueryStringLength)
         {
             app.MustNotNull("app");
-            options.MustNotNull("options");
+            getMaxQueryStringLength.MustNotNull("getMaxQueryStringLength");
 
-            app.Use(Limits.MaxQueryStringLength(options));
+            app.Use(Limits.MaxQueryStringLength(getMaxQueryStringLength));
 
             return app;
         }
@@ -256,22 +233,23 @@
             app.MustNotNull("app");
             getMaxContentLength.MustNotNull("getMaxContentLength");
 
-            return MaxRequestContentLength(app, new MaxRequestContentLengthOptions(getMaxContentLength));
+            app.Use(Limits.MaxRequestContentLength(getMaxContentLength));
+
+            return app;
         }
 
         /// <summary>
         /// Limits the length of the request content.
         /// </summary>
         /// <param name="app">The IAppBuilder instance.</param>
-        /// <param name="options">The max request content length options.</param>
+        /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">app</exception>
-        public static IAppBuilder MaxRequestContentLength(this IAppBuilder app, MaxRequestContentLengthOptions options)
+        public static IAppBuilder MaxRequestContentLength(this IAppBuilder app, Func<RequestContext, int> getMaxContentLength)
         {
             app.MustNotNull("app");
-            options.MustNotNull("options");
+            getMaxContentLength.MustNotNull("getMaxContentLength");
 
-            app.Use(Limits.MaxRequestContentLength(options));
+            app.Use(Limits.MaxRequestContentLength(getMaxContentLength));
 
             return app;
         }
@@ -300,22 +278,22 @@
             app.MustNotNull("app");
             getMaxUrlLength.MustNotNull("getMaxUrlLength");
 
-            return MaxUrlLength(app, new MaxUrlLengthOptions(getMaxUrlLength));
+            app.Use(Limits.MaxUrlLength(getMaxUrlLength));
+            return app;
         }
 
         /// <summary>
         /// Limits the length of the URL.
         /// </summary>
         /// <param name="app">The IAppBuilder instance.</param>
-        /// <param name="options">The max url length options.</param>
+        /// <param name="getMaxUrlLength">A delegate to get the maximum URL length.</param>
         /// <returns>The IAppBuilder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">app</exception>
-        public static IAppBuilder MaxUrlLength(this IAppBuilder app, MaxUrlLengthOptions options)
+        public static IAppBuilder MaxUrlLength(this IAppBuilder app, Func<RequestContext, int> getMaxUrlLength)
         {
             app.MustNotNull("app");
-            options.MustNotNull("options");
+            getMaxUrlLength.MustNotNull("getMaxUrlLength");
 
-            app.Use(Limits.MaxUrlLength(options));
+            app.Use(Limits.MaxUrlLength(getMaxUrlLength));
             return app;
         }
     }

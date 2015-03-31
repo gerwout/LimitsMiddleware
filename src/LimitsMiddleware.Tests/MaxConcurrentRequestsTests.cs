@@ -13,7 +13,7 @@
     public class MaxConcurrentRequestsTests
     {
         [Fact]
-        public async Task When_max_concurrent_request_is_1_then_second_request_should_get_service_unavailable_and_custom_reasonPhrase()
+        public async Task When_max_concurrent_request_is_1_then_second_request_should_get_service_unavailable()
         {
             HttpClient httpClient = CreateHttpClient(1);
             Task<HttpResponseMessage> request1 = httpClient.GetAsync("http://example.com");
@@ -23,7 +23,6 @@
 
             request1.Result.StatusCode.Should().Be(HttpStatusCode.OK);
             request2.Result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
-            request2.Result.ReasonPhrase.Should().Be("custom phrase");
         }
 
         [Fact]
@@ -77,10 +76,7 @@
         private static HttpClient CreateHttpClient(Func<RequestContext, int> maxConcurrentRequests)
         {
             return TestServer.Create(builder => builder
-                .MaxConcurrentRequests(new MaxConcurrentRequestOptions(maxConcurrentRequests)
-                {
-                    LimitReachedReasonPhrase = code => "custom phrase"
-                })
+                .MaxConcurrentRequests(maxConcurrentRequests)
                 .Use(async (context, _) =>
                 {
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 2).ToArray();

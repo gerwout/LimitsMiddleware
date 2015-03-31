@@ -23,14 +23,6 @@
         }
 
         [Fact]
-        public void When_options_is_null_then_should_throw()
-        {
-            Action act = () => Limits.ConnectionTimeout((ConnectionTimeoutOptions)null);
-
-            act.ShouldThrow<ArgumentNullException>();
-        }
-
-        [Fact]
         public async Task When_time_out_is_triggered_then_should_throw()
         {
             TimeSpan timeout = TimeSpan.FromMilliseconds(1000);
