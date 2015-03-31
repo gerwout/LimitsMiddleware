@@ -5,7 +5,7 @@ namespace LimitsMiddleware
     /// <summary>
     /// Options for a timeout connection.
     /// </summary>
-    public class ConnectionTimeoutOptions : OptionsBase
+    public class ConnectionTimeoutOptions
     {
         private readonly Func<RequestContext, TimeSpan> _getTimeout;
 

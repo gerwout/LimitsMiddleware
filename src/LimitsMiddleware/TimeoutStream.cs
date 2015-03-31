@@ -4,6 +4,7 @@
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
+    using LimitsMiddleware.Logging;
     using Timer = System.Timers.Timer;
 
     internal class TimeoutStream : Stream
@@ -11,20 +12,19 @@
         private readonly Stream _innerStream;
         private readonly TimeSpan _timeout;
         private readonly Timer _timer;
-        private readonly Tracer _tracer;
+        private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
 
-        public TimeoutStream(Stream innerStream, TimeSpan timeout, Tracer tracer)
+        public TimeoutStream(Stream innerStream, TimeSpan timeout)
         {
             _innerStream = innerStream;
             _timeout = timeout;
-            _tracer = tracer;
             _timer = new Timer(_timeout.TotalMilliseconds)
             {
                 AutoReset = false
             };
             _timer.Elapsed += (sender, args) =>
             {
-                tracer.AsInfo("Timeout of {0} reached.".FormatWith(_timeout));
+                Logger.Info("Timeout of {0} reached.".FormatWith(_timeout));
                 Close();
             };
             _timer.Start();
@@ -113,7 +113,7 @@
         private void Reset()
         {
             _timer.Stop();
-            _tracer.AsVerbose("Timeout timer reseted.");
+            Logger.Debug("Timeout timer reseted.");
             _timer.Start();
         }
     }

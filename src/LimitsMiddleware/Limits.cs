@@ -5,6 +5,7 @@
     using System.Threading;
     using System.Threading.Tasks;
     using LimitsMiddleware.LibOwin;
+    using LimitsMiddleware.Logging;
     using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
     using MidFunc = System.Func<
         System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
@@ -77,6 +78,8 @@
         {
             options.MustNotNull("options");
 
+            var logger = LogProvider.GetLogger("LimitsMiddleware.ConnectionTimeout");
+
             return
                 next =>
                 env =>
@@ -87,12 +90,12 @@
                     Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                     Stream responseBodyStream = context.Response.Body;
 
-                    options.Tracer.AsVerbose("Configure timeouts.");
+                    logger.Debug("Configure timeouts.");
                     TimeSpan connectionTimeout = options.GetTimeout(limitsRequestContext);
-                    context.Request.Body = new TimeoutStream(requestBodyStream, connectionTimeout, options.Tracer);
-                    context.Response.Body = new TimeoutStream(responseBodyStream, connectionTimeout, options.Tracer);
+                    context.Request.Body = new TimeoutStream(requestBodyStream, connectionTimeout);
+                    context.Response.Body = new TimeoutStream(responseBodyStream, connectionTimeout);
 
-                    options.Tracer.AsVerbose("Request with configured timeout forwarded.");
+                    logger.Debug("Request with configured timeout forwarded.");
                     return next(env);
                 };
         }
@@ -295,6 +298,8 @@
         {
             options.MustNotNull("options");
 
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthPerRequest");
+
             return
                 next =>
                 env =>
@@ -305,12 +310,12 @@
 
                     var limitsRequestContext = new RequestContext(context.Request);
 
-                    options.Tracer.AsVerbose("Configure streams to be limited.");
+                    logger.Debug("Configure streams to be limited.");
                     context.Request.Body = new ThrottledStream(requestBodyStream, new RateLimiter(() => options.GetMaxBytesPerSecond(limitsRequestContext)));
                     context.Response.Body = new ThrottledStream(responseBodyStream, new RateLimiter(() => options.GetMaxBytesPerSecond(limitsRequestContext)));
 
                     //TODO consider SendFile interception
-                    options.Tracer.AsVerbose("With configured limit forwarded.");
+                    logger.Debug("With configured limit forwarded.");
                     return next(env);
                 };
         }
@@ -414,6 +419,7 @@
         {
             options.MustNotNull("options");
 
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthGlobal");
             var rateLimiter = new RateLimiter(() => options.MaxBytesPerSecond);
 
             return
@@ -424,12 +430,12 @@
                     Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                     Stream responseBodyStream = context.Response.Body;
 
-                    options.Tracer.AsVerbose("Configure streams to be limited.");
+                    logger.Debug("Configure streams to be limited.");
                     context.Request.Body = new ThrottledStream(requestBodyStream, rateLimiter);
                     context.Response.Body = new ThrottledStream(responseBodyStream, rateLimiter);
 
                     //TODO consider SendFile interception
-                    options.Tracer.AsVerbose("With configured limit forwarded.");
+                    logger.Debug("With configured limit forwarded.");
                     return next(env);
                 };
         }
@@ -531,7 +537,9 @@
         {
             options.MustNotNull("options");
 
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxConcurrentRequests");
             int concurrentRequestCounter = 0;
+
             return
                 next =>
                 async env =>
@@ -546,23 +554,24 @@
                     try
                     {
                         int concurrentRequests = Interlocked.Increment(ref concurrentRequestCounter);
-                        options.Tracer.AsVerbose("Concurrent counter incremented.");
-                        options.Tracer.AsVerbose("Checking concurrent request #{0}.", concurrentRequests);
+                        logger.Debug("Concurrent counter incremented.");
+                        logger.Debug("Checking concurrent request #{0}.".FormatWith(concurrentRequests));
                         if (concurrentRequests > maxConcurrentRequests)
                         {
-                            options.Tracer.AsInfo("Limit of {0} exceeded with #{1}. Request rejected.", maxConcurrentRequests, concurrentRequests);
+                            logger.Info("Limit of {0} exceeded with #{1}. Request rejected."
+                                .FormatWith(maxConcurrentRequests, concurrentRequests));
                             IOwinResponse response = new OwinContext(env).Response;
                             response.StatusCode = 503;
                             response.ReasonPhrase = options.LimitReachedReasonPhrase(response.StatusCode);
                             return;
                         }
-                        options.Tracer.AsVerbose("Request forwarded.");
+                        logger.Debug("Request forwarded.");
                         await next(env);
                     }
                     finally
                     {
                         Interlocked.Decrement(ref concurrentRequestCounter);
-                        options.Tracer.AsVerbose("Concurrent counter decremented.");
+                        logger.Debug("Concurrent counter decremented.");
                     }
                 };
         }
@@ -666,6 +675,8 @@
         {
             options.MustNotNull("options");
 
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxQueryStringLength");
+
             return
                 next =>
                 async env =>
@@ -676,21 +687,21 @@
                     {
                         int maxQueryStringLength = options.MaxQueryStringLength;
                         string unescapedQueryString = Uri.UnescapeDataString(queryString.Value);
-                        options.Tracer.AsVerbose("Querystring of request with an unescaped length of {0}", unescapedQueryString.Length);
+                        logger.Debug("Querystring of request with an unescaped length of {0}".FormatWith(unescapedQueryString.Length));
                         if (unescapedQueryString.Length > maxQueryStringLength)
                         {
-                            options.Tracer.AsInfo("Querystring (Length {0}) too long (allowed {1}). Request rejected.",
+                            logger.Info("Querystring (Length {0}) too long (allowed {1}). Request rejected.".FormatWith(
                                 unescapedQueryString.Length,
-                                maxQueryStringLength);
+                                maxQueryStringLength));
                             context.Response.StatusCode = 414;
                             context.Response.ReasonPhrase = options.LimitReachedReasonPhrase(context.Response.StatusCode);
                             return;
                         }
-                        options.Tracer.AsVerbose("Querystring length check passed.");
+                        logger.Debug("Querystring length check passed.");
                     }
                     else
                     {
-                        options.Tracer.AsVerbose("No querystring.");
+                        logger.Debug("No querystring.");
                     }
                     await next(env);
                 };
@@ -789,6 +800,8 @@
         {
             options.MustNotNull("options");
 
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxRequestContentLength");
+
             return
                 next =>
                 async env =>
@@ -800,54 +813,56 @@
 
                     if (requestMethod == "GET" || requestMethod == "HEAD")
                     {
-                        options.Tracer.AsVerbose("GET or HEAD request without checking forwarded.");
+                        logger.Debug("GET or HEAD request without checking forwarded.");
                         await next(env);
                         return;
                     }
                     int maxContentLength = options.GetMaxContentLength(limitsRequestContext);
-                    options.Tracer.AsVerbose("Max valid content length is {0}.", maxContentLength);
+                    logger.Debug("Max valid content length is {0}.".FormatWith(maxContentLength));
                     if (!IsChunkedRequest(request))
                     {
-                        options.Tracer.AsVerbose("Not a chunked request. Checking content lengt header.");
+                        logger.Debug("Not a chunked request. Checking content lengt header.");
                         string contentLengthHeaderValue = request.Headers.Get("Content-Length");
                         if (contentLengthHeaderValue == null)
                         {
-                            options.Tracer.AsInfo("No content length header provided. Request rejected.");
+                            logger.Info("No content length header provided. Request rejected.");
                             SetResponseStatusCodeAndReasonPhrase(context, 411, options);
                             return;
                         }
                         int contentLength;
                         if (!int.TryParse(contentLengthHeaderValue, out contentLength))
                         {
-                            options.Tracer.AsInfo("Invalid content length header value. Value: {0}", contentLengthHeaderValue);
+                            logger.Info("Invalid content length header value. Value: {0}".FormatWith(contentLengthHeaderValue));
                             SetResponseStatusCodeAndReasonPhrase(context, 400, options);
                             return;
                         }
                         if (contentLength > maxContentLength)
                         {
-                            options.Tracer.AsInfo("Content length of {0} exceeds maximum of {1}. Request rejected.", contentLength, maxContentLength);
+                            logger.Info("Content length of {0} exceeds maximum of {1}. Request rejected.".FormatWith(
+                                contentLength,
+                                maxContentLength));
                             SetResponseStatusCodeAndReasonPhrase(context, 413, options);
                             return;
                         }
-                        options.Tracer.AsVerbose("Content length header check passed.");
+                        logger.Debug("Content length header check passed.");
                     }
                     else
                     {
-                        options.Tracer.AsVerbose("Chunked request. Content length header not checked.");
+                        logger.Debug("Chunked request. Content length header not checked.");
                     }
 
                     request.Body = new ContentLengthLimitingStream(request.Body, maxContentLength);
-                    options.Tracer.AsVerbose("Request body stream configured with length limiting stream of {0}.", maxContentLength);
+                    logger.Debug("Request body stream configured with length limiting stream of {0}.".FormatWith(maxContentLength));
 
                     try
                     {
-                        options.Tracer.AsVerbose("Request forwarded.");
+                        logger.Debug("Request forwarded.");
                         await next(env);
-                        options.Tracer.AsVerbose("Processing finished.");
+                        logger.Debug("Processing finished.");
                     }
                     catch (ContentLengthExceededException)
                     {
-                        options.Tracer.AsInfo("Content length of {0} exceeded. Request canceled and rejected.", maxContentLength);
+                        logger.Info("Content length of {0} exceeded. Request canceled and rejected.".FormatWith(maxContentLength));
                         SetResponseStatusCodeAndReasonPhrase(context, 413, options);
                     }
                 };
@@ -949,6 +964,8 @@
         {
             options.MustNotNull("options");
 
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxUrlLength");
+
             return
                 next =>
                 env =>
@@ -957,19 +974,19 @@
                     int maxUrlLength = options.MaxUrlLength;
                     string unescapedUri = Uri.UnescapeDataString(context.Request.Uri.AbsoluteUri);
 
-                    options.Tracer.AsVerbose("Checking request url length.");
+                    logger.Debug("Checking request url length.");
                     if (unescapedUri.Length > maxUrlLength)
                     {
-                        options.Tracer.AsInfo(
-                            "Url \"{0}\"(Length: {2}) exceeds allowed length of {1}. Request rejected.",
+                        logger.Info(
+                            "Url \"{0}\"(Length: {2}) exceeds allowed length of {1}. Request rejected.".FormatWith(
                             unescapedUri,
                             maxUrlLength,
-                            unescapedUri.Length);
+                            unescapedUri.Length));
                         context.Response.StatusCode = 414;
                         context.Response.ReasonPhrase = options.LimitReachedReasonPhrase(context.Response.StatusCode);
                         return Task.FromResult(0);
                     }
-                    options.Tracer.AsVerbose("Check passed. Request forwarded.");
+                    logger.Debug("Check passed. Request forwarded.");
                     return next(env);
                 };
         }
@@ -1102,6 +1119,8 @@
         public static MidFunc MinResponseDelay(MinResponseDelayOptions options)
         {
             options.MustNotNull("options");
+
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MinResponseDelay");
 
             return
                 next =>

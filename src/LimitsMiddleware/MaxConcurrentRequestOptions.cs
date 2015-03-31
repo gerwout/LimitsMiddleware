@@ -5,7 +5,7 @@
     /// <summary>
     /// Options for limiting the number of concurrent requests.
     /// </summary>
-    public class MaxConcurrentRequestOptions : OptionsBase
+    public class MaxConcurrentRequestOptions
     {
         private readonly Func<RequestContext, int> _getMaxConcurrentRequests;
         private Func<int, string> _limitReachedReasonPhrase;

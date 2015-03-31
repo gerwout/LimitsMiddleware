@@ -5,7 +5,7 @@ namespace LimitsMiddleware
     /// <summary>
     /// Options for limiting the max bandwidth.
     /// </summary>
-    public class MaxBandwidthOptions : OptionsBase
+    public class MaxBandwidthOptions
     {
         private readonly Func<RequestContext, int> _getMaxBytesPerSecond;
 

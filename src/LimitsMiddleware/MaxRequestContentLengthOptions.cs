@@ -5,7 +5,7 @@ namespace LimitsMiddleware
     /// <summary>
     /// Options for limitng the request content length.
     /// </summary>
-    public class MaxRequestContentLengthOptions : OptionsBase
+    public class MaxRequestContentLengthOptions
     {
         private readonly Func<RequestContext, int> _getMaxContentLength;
         private Func<int, string> _limitReachedReasonPhrase;

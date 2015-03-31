@@ -5,7 +5,7 @@
     /// <summary>
     /// Options to limit the length of an URL.
     /// </summary>
-    public class MaxUrlLengthOptions : OptionsBase
+    public class MaxUrlLengthOptions
     {
         private readonly Func<int> _getMaxUrlLength;
         private Func<int, string> _limitReachedReasonPhrase;

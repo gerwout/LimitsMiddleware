@@ -5,7 +5,7 @@
     /// <summary>
     /// Options for limiting the querstring length.
     /// </summary>
-    public class MaxQueryStringLengthOptions : OptionsBase
+    public class MaxQueryStringLengthOptions
     {
         private readonly Func<int> _getMaxQueryStringLength;
         private Func<int, string> _limitReachedReasonPhrase;

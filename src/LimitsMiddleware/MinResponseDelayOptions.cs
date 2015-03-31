@@ -5,7 +5,7 @@
     /// <summary>
     /// Options for setting a delay to each response
     /// </summary>
-    public class MinResponseDelayOptions : OptionsBase
+    public class MinResponseDelayOptions
     {
         private readonly Func<RequestContext, TimeSpan> _getMinDelay;
 
