@@ -17,13 +17,17 @@
         [Fact]
         public void When_time_out_delegate_is_null_then_should_throw()
         {
-            Assert.Throws<ArgumentNullException>(() => Limits.ConnectionTimeout((Func<TimeSpan>)null));
+            Action act = () => Limits.ConnectionTimeout((Func<TimeSpan>) null);
+
+            act.ShouldThrow<ArgumentNullException>();
         }
 
         [Fact]
         public void When_options_is_null_then_should_throw()
         {
-            Assert.Throws<ArgumentNullException>(() => Limits.ConnectionTimeout((ConnectionTimeoutOptions)null));
+            Action act = () => Limits.ConnectionTimeout((ConnectionTimeoutOptions)null);
+
+            act.ShouldThrow<ArgumentNullException>();
         }
 
         [Fact]
@@ -105,7 +109,7 @@
             {
                 actual = e.GetType();
             }
-            Assert.Equal(expected, actual);
+            expected.Should().Be(actual);
         }
 
         private class DelayedReadStream : MemoryStream

@@ -22,7 +22,7 @@
     /// <summary>
     /// Represent a set of middleware functions to apply limits to an OWIN pipeline.
     /// </summary>
-    public static class Limits
+    public static partial class Limits
     {
         /// <summary>
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
