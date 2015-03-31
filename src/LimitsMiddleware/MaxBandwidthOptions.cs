@@ -49,6 +49,11 @@ namespace LimitsMiddleware
             get { throw new NotSupportedException(); }
         }
 
+        /// <summary>
+        /// Gets the maximum bytes per second.
+        /// </summary>
+        /// <param name="requestContext">The <see cref="RequestContext"/>.</param>
+        /// <returns>THe maximum bytes per second.</returns>
         public int GetMaxBytesPerSecond(RequestContext requestContext)
         {
             return _getMaxBytesPerSecond(requestContext);

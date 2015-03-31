@@ -47,6 +47,11 @@ namespace LimitsMiddleware
             get { throw new NotSupportedException(); }
         }
 
+        /// <summary>
+        /// Gets the timeout.
+        /// </summary>
+        /// <param name="requestContext">The <see cref="RequestContext"/>.</param>
+        /// <returns><see cref="TimeSpan"/></returns>
         public TimeSpan GetTimeout(RequestContext requestContext)
         {
             return _getTimeout(requestContext);

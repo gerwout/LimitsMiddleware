@@ -46,6 +46,11 @@ namespace LimitsMiddleware
             get { throw new NotSupportedException(); }
         }
 
+        /// <summary>
+        /// Gets the maximum content length.
+        /// </summary>
+        /// <param name="requestContext">The <see cref="RequestContext"/>.</param>
+        /// <returns>The maximum content length, in bytes.</returns>
         public int GetMaxContentLength(RequestContext requestContext)
         {
             return _getMaxContentLength(requestContext);

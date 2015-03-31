@@ -49,6 +49,11 @@
             get { throw new NotSupportedException(); }
         }
 
+        /// <summary>
+        /// Gets the maximum allowed concurrent requests.
+        /// </summary>
+        /// <param name="requestContext">The <see cref="RequestContext"/>.</param>
+        /// <returns>The maximum allowed concurrent requests.</returns>
         public int GetMaxConcurrentRequests(RequestContext requestContext)
         {
             return _getMaxConcurrentRequests(requestContext);
