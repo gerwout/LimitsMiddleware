@@ -47,6 +47,9 @@
             _getMinDelay = getMinDelay;
         }
 
+        /// <summary>
+        /// Returns the minimum delay.
+        /// </summary>
         public TimeSpan MinDelay
         {
             get { return _getMinDelay(); }
