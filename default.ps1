@@ -1,4 +1,4 @@
-properties { 
+properties {
 	$projectName = "LimitsMiddleware"
 	$buildNumber = 0
 	$rootDir  = Resolve-Path .\
@@ -24,7 +24,7 @@ task UpdateVersion {
 	Update-Version $newVersion $assemblyInfoFilePath
 }
 
-task Compile { 
+task Compile {
 	exec { msbuild /nologo /verbosity:quiet $solutionFilePath /p:Configuration=Release }
 }
 
@@ -43,7 +43,7 @@ task ILMerge -depends Compile {
 }
 
 task RunTests -depends Compile {
-	$xunitRunner = "$srcDir\packages\xunit.runners.1.9.2\tools\xunit.console.clr4.exe"
+	$xunitRunner = "$srcDir\packages\\xunit.runner.console.2.0.0\tools\xunit.console.exe"
 	gci . -Recurse -Include *Tests.csproj, Tests.*.csproj | % {
 		$project = $_.BaseName
 		if(!(Test-Path $reportsDir\xUnit\$project)){

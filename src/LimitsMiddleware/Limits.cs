@@ -5,23 +5,17 @@
     using System.Threading;
     using System.Threading.Tasks;
     using LimitsMiddleware.LibOwin;
+    using LimitsMiddleware.Logging;
     using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
     using MidFunc = System.Func<
         System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
         System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
         >;
-    using BuildFunc = System.Action<
-        System.Func<
-            System.Collections.Generic.IDictionary<string, object>,
-            System.Func<
-                System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
-                System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
-        >>>;
 
     /// <summary>
     /// Represent a set of middleware functions to apply limits to an OWIN pipeline.
     /// </summary>
-    public static class Limits
+    public static partial class Limits
     {
         /// <summary>
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
@@ -48,169 +42,42 @@
         {
             getTimeout.MustNotNull("getTimeout");
 
-            return ConnectionTimeout(new ConnectionTimeoutOptions(getTimeout));
+            return ConnectionTimeout(_ => getTimeout());
         }
 
         /// <summary>
         /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
         /// write activity on the response body stream.
         /// </summary>
-        /// <param name="options">The connection timeout options.</param>
+        /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
+        /// to supply different values at runtime.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static MidFunc ConnectionTimeout(ConnectionTimeoutOptions options)
+        /// <exception cref="System.ArgumentNullException">getTimeout</exception>
+        public static MidFunc ConnectionTimeout(Func<RequestContext, TimeSpan> getTimeout)
         {
-            options.MustNotNull("options");
+            getTimeout.MustNotNull("getTimeout");
+
+            var logger = LogProvider.GetLogger("LimitsMiddleware.ConnectionTimeout");
 
             return
                 next =>
                 env =>
                 {
                     var context = new OwinContext(env);
+                    var limitsRequestContext = new RequestContext(context.Request);
+
                     Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                     Stream responseBodyStream = context.Response.Body;
 
-                    options.Tracer.AsVerbose("Configure timeouts.");
-                    TimeSpan connectionTimeout = options.Timeout;
-                    context.Request.Body = new TimeoutStream(requestBodyStream, connectionTimeout, options.Tracer);
-                    context.Response.Body = new TimeoutStream(responseBodyStream, connectionTimeout, options.Tracer);
+                    logger.Debug("Configure timeouts.");
+                    TimeSpan connectionTimeout = getTimeout(limitsRequestContext);
+                    context.Request.Body = new TimeoutStream(requestBodyStream, connectionTimeout);
+                    context.Response.Body = new TimeoutStream(responseBodyStream, connectionTimeout);
 
-                    options.Tracer.AsVerbose("Request with configured timeout forwarded.");
+                    logger.Debug("Request with configured timeout forwarded.");
                     return next(env);
                 };
         }
-
-        /// <summary>
-        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
-        /// write activity on the response body stream.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="timeout">The timeout.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc ConnectionTimeout(this BuildFunc builder, TimeSpan timeout)
-        {
-            builder.MustNotNull("builder");
-            
-            return ConnectionTimeout(builder, () => timeout);
-        }
-
-        /// <summary>
-        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
-        /// write activity on the response body stream.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
-        /// to supply different values at runtime.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">getTimeout</exception>
-        public static BuildFunc ConnectionTimeout(this BuildFunc builder, Func<TimeSpan> getTimeout)
-        {
-            builder.MustNotNull("builder");
-            getTimeout.MustNotNull("getTimeout");
-
-            return ConnectionTimeout(builder, new ConnectionTimeoutOptions(getTimeout));
-        }
-
-        /// <summary>
-        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
-        /// write activity on the response body stream.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The connection timeout options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static BuildFunc ConnectionTimeout(this BuildFunc builder, ConnectionTimeoutOptions options)
-        {
-            builder.MustNotNull("builder");
-            options.MustNotNull("options");
-
-            builder(_ => ConnectionTimeout(options));
-            return builder;
-        }
-
-        /// <summary>
-        /// Limits the bandwith used per request by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
-        /// number to specify infinite bandwidth.</param>
-        /// <returns>An OWIN middleware delegate.</returns>
-        [Obsolete("Use MaxBandwidthPerRequest instead.")]
-        public static MidFunc MaxBandwidth(int maxBytesPerSecond)
-        {
-            return MaxBandwidthPerRequest(maxBytesPerSecond);
-        }
-
-        /// <summary>
-        /// Limits the bandwith used per request by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
-        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
-        /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
-        [Obsolete("Use MaxBandwidthPerRequest instead.")]
-        public static MidFunc MaxBandwidth(Func<int> getMaxBytesPerSecond)
-        {
-            return MaxBandwidthPerRequest(getMaxBytesPerSecond);
-        }
-
-        /// <summary>
-        /// Limits the bandwith per request used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="options">The max bandwidth options.</param>
-        /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        [Obsolete("Use MaxBandwidthPerRequest instead.")]
-        public static MidFunc MaxBandwidth(MaxBandwidthOptions options)
-        {
-            return MaxBandwidthPerRequest(options);
-        }
-
-        /// <summary>
-        /// Limits the bandwith used per request by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
-        /// number to specify infinite bandwidth.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        [Obsolete("Use MaxBandwidthPerRequest instead.")]
-        public static BuildFunc MaxBandwidth(this BuildFunc builder, int maxBytesPerSecond)
-        {
-            return MaxBandwidthPerRequest(builder, maxBytesPerSecond);
-        }
-
-        /// <summary>
-        /// Limits the bandwith used per request by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
-        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
-        /// <returns>The builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
-        [Obsolete("Use MaxBandwidthPerRequest instead.")]
-        public static BuildFunc MaxBandwidth(this BuildFunc builder, Func<int> getMaxBytesPerSecond)
-        {
-            return MaxBandwidthPerRequest(builder, getMaxBytesPerSecond);
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The max bandwith options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        [Obsolete("Use MaxBandwidthPerRequest instead.")]
-        public static BuildFunc MaxBandwidth(this BuildFunc builder, MaxBandwidthOptions options)
-        {
-            return MaxBandwidthPerRequest(builder, options);
-        }
-
 
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
@@ -234,24 +101,21 @@
         {
             getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
 
-            return MaxBandwidthPerRequest(new MaxBandwidthOptions(getMaxBytesPerSecond));
+            return MaxBandwidthPerRequest(_ => getMaxBytesPerSecond());
         }
 
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="options">The max bandwidth options.</param>
+        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static MidFunc MaxBandwidthPerRequest(MaxBandwidthOptions options)
+        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
+        public static MidFunc MaxBandwidthPerRequest(Func<RequestContext, int> getMaxBytesPerSecond)
         {
-            options.MustNotNull("options");
+            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
 
-            int maxBytesPerSecond = options.MaxBytesPerSecond;
-            if (maxBytesPerSecond < 0)
-            {
-                maxBytesPerSecond = 0;
-            }
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthPerRequest");
 
             return
                 next =>
@@ -261,62 +125,16 @@
                     Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                     Stream responseBodyStream = context.Response.Body;
 
-                    options.Tracer.AsVerbose("Configure streams to be limited.");
-                    context.Request.Body = new ThrottledStream(requestBodyStream, new RateLimiter(maxBytesPerSecond));
-                    context.Response.Body = new ThrottledStream(responseBodyStream, new RateLimiter(maxBytesPerSecond));
+                    var limitsRequestContext = new RequestContext(context.Request);
+
+                    logger.Debug("Configure streams to be limited.");
+                    context.Request.Body = new ThrottledStream(requestBodyStream, new RateLimiter(() => getMaxBytesPerSecond(limitsRequestContext)));
+                    context.Response.Body = new ThrottledStream(responseBodyStream, new RateLimiter(() => getMaxBytesPerSecond(limitsRequestContext)));
 
                     //TODO consider SendFile interception
-                    options.Tracer.AsVerbose("With configured limit forwarded.");
+                    logger.Debug("With configured limit forwarded.");
                     return next(env);
                 };
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
-        /// number to specify infinite bandwidth.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxBandwidthPerRequest(this BuildFunc builder, int maxBytesPerSecond)
-        {
-            builder.MustNotNull("builder");
-
-            return MaxBandwidthPerRequest(builder, () => maxBytesPerSecond);
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
-        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
-        /// <returns>The builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
-        public static BuildFunc MaxBandwidthPerRequest(this BuildFunc builder, Func<int> getMaxBytesPerSecond)
-        {
-            builder.MustNotNull("builder");
-
-            return MaxBandwidthPerRequest(builder, new MaxBandwidthOptions(getMaxBytesPerSecond));
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The max bandwith options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static BuildFunc MaxBandwidthPerRequest(this BuildFunc builder, MaxBandwidthOptions options)
-        {
-            builder.MustNotNull("builder");
-            options.MustNotNull("options");
-
-            builder(_ => MaxBandwidthPerRequest(options));
-            return builder;
         }
 
         /// <summary>
@@ -341,26 +159,8 @@
         {
             getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
 
-            return MaxBandwidthGlobal(new MaxBandwidthOptions(getMaxBytesPerSecond));
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="options">The max bandwidth options.</param>
-        /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static MidFunc MaxBandwidthGlobal(MaxBandwidthOptions options)
-        {
-            options.MustNotNull("options");
-
-            int maxBytesPerSecond = options.MaxBytesPerSecond;
-            if (maxBytesPerSecond < 0)
-            {
-                maxBytesPerSecond = 0;
-            }
-
-            var rateLimiter = new RateLimiter(maxBytesPerSecond);
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthGlobal");
+            var rateLimiter = new RateLimiter(getMaxBytesPerSecond);
 
             return
                 next =>
@@ -370,64 +170,16 @@
                     Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                     Stream responseBodyStream = context.Response.Body;
 
-                    options.Tracer.AsVerbose("Configure streams to be limited.");
+                    logger.Debug("Configure streams to be limited.");
                     context.Request.Body = new ThrottledStream(requestBodyStream, rateLimiter);
                     context.Response.Body = new ThrottledStream(responseBodyStream, rateLimiter);
 
                     //TODO consider SendFile interception
-                    options.Tracer.AsVerbose("With configured limit forwarded.");
+                    logger.Debug("With configured limit forwarded.");
                     return next(env);
                 };
         }
 
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
-        /// number to specify infinite bandwidth.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxBandwidthGlobal(this BuildFunc builder, int maxBytesPerSecond)
-        {
-            builder.MustNotNull("builder");
-
-            return MaxBandwidthGlobal(builder, () => maxBytesPerSecond);
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
-        /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
-        /// <returns>The builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
-        public static BuildFunc MaxBandwidthGlobal(this BuildFunc builder, Func<int> getMaxBytesPerSecond)
-        {
-            builder.MustNotNull("builder");
-
-            return MaxBandwidthGlobal(builder, new MaxBandwidthOptions(getMaxBytesPerSecond));
-        }
-
-        /// <summary>
-        /// Limits the bandwith used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The max bandwith options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static BuildFunc MaxBandwidthGlobal(this BuildFunc builder, MaxBandwidthOptions options)
-        {
-            builder.MustNotNull("builder");
-            options.MustNotNull("options");
-
-            builder(_ => MaxBandwidthGlobal(options));
-            return builder;
-        }
-        
         /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>
@@ -450,25 +202,30 @@
         {
             getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
 
-            return MaxConcurrentRequests(new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
+            return MaxConcurrentRequests(_ => getMaxConcurrentRequests());
         }
 
         /// <summary>
         /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="options">The max concurrent request options.</param>
+        /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
+        /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static MidFunc MaxConcurrentRequests(MaxConcurrentRequestOptions options)
+        /// <exception cref="System.ArgumentNullException">getMaxConcurrentRequests</exception>
+        public static MidFunc MaxConcurrentRequests(Func<RequestContext, int> getMaxConcurrentRequests)
         {
-            options.MustNotNull("options");
+            getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
 
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxConcurrentRequests");
             int concurrentRequestCounter = 0;
+
             return
                 next =>
                 async env =>
                 {
-                    int maxConcurrentRequests = options.MaxConcurrentRequests;
+                    var owinRequest = new OwinRequest(env);
+                    var limitsRequestContext = new RequestContext(owinRequest);
+                    int maxConcurrentRequests = getMaxConcurrentRequests(limitsRequestContext);
                     if (maxConcurrentRequests <= 0)
                     {
                         maxConcurrentRequests = int.MaxValue;
@@ -476,74 +233,26 @@
                     try
                     {
                         int concurrentRequests = Interlocked.Increment(ref concurrentRequestCounter);
-                        options.Tracer.AsVerbose("Concurrent counter incremented.");
-                        options.Tracer.AsVerbose("Checking concurrent request #{0}.", concurrentRequests);
+                        logger.Debug("Concurrent counter incremented.");
+                        logger.Debug("Checking concurrent request #{0}.".FormatWith(concurrentRequests));
                         if (concurrentRequests > maxConcurrentRequests)
                         {
-                            options.Tracer.AsInfo("Limit of {0} exceeded with #{1}. Request rejected.", maxConcurrentRequests, concurrentRequests);
+                            logger.Info("Limit of {0} exceeded with #{1}. Request rejected."
+                                .FormatWith(maxConcurrentRequests, concurrentRequests));
                             IOwinResponse response = new OwinContext(env).Response;
                             response.StatusCode = 503;
-                            response.ReasonPhrase = options.LimitReachedReasonPhrase(response.StatusCode);
+                            response.ReasonPhrase = "Service Unavailable";
                             return;
                         }
-                        options.Tracer.AsVerbose("Request forwarded.");
+                        logger.Debug("Request forwarded.");
                         await next(env);
                     }
                     finally
                     {
                         Interlocked.Decrement(ref concurrentRequestCounter);
-                        options.Tracer.AsVerbose("Concurrent counter decremented.");
+                        logger.Debug("Concurrent counter decremented.");
                     }
                 };
-        }
-
-        /// <summary>
-        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="maxConcurrentRequests">The maximum number of concurrent requests. Use 0 or a negative
-        /// number to specify unlimited number of concurrent requests.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, int maxConcurrentRequests)
-        {
-            builder.MustNotNull("builder");
-
-            return MaxConcurrentRequests(builder, () => maxConcurrentRequests);
-        }
-
-        /// <summary>
-        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
-        /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">getMaxConcurrentRequests</exception>
-        public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, Func<int> getMaxConcurrentRequests)
-        {
-            builder.MustNotNull("builder");
-            getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
-
-            return MaxConcurrentRequests(builder, new MaxConcurrentRequestOptions(getMaxConcurrentRequests));
-        }
-
-        /// <summary>
-        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The max concurrent request options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static BuildFunc MaxConcurrentRequests(this BuildFunc builder, MaxConcurrentRequestOptions options)
-        {
-            builder.MustNotNull("builder");
-            options.MustNotNull("options");
-
-            builder(_ => MaxConcurrentRequests(options));
-            return builder;
         }
 
         /// <summary>
@@ -553,7 +262,17 @@
         /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxQueryStringLength(int maxQueryStringLength)
         {
-            return MaxQueryStringLength(() => maxQueryStringLength);
+            return MaxQueryStringLength(_ => maxQueryStringLength);
+        }
+
+        /// <summary>
+        /// Limits the length of the query string.
+        /// </summary>
+        /// <param name="getMaxQueryStringLength">A delegate to get the maximum query string length.</param>
+        /// <returns>An OWIN middleware delegate.</returns>
+        public static MidFunc MaxQueryStringLength(Func<int> getMaxQueryStringLength)
+        {
+            return MaxQueryStringLength(_ => getMaxQueryStringLength());
         }
 
         /// <summary>
@@ -562,98 +281,42 @@
         /// <param name="getMaxQueryStringLength">A delegate to get the maximum query string length.</param>
         /// <returns>An OWIN middleware delegate.</returns>
         /// <exception cref="System.ArgumentNullException">getMaxQueryStringLength</exception>
-        public static MidFunc MaxQueryStringLength(Func<int> getMaxQueryStringLength)
+        public static MidFunc MaxQueryStringLength(Func<RequestContext, int> getMaxQueryStringLength)
         {
             getMaxQueryStringLength.MustNotNull("getMaxQueryStringLength");
 
-            return MaxQueryStringLength(new MaxQueryStringLengthOptions(getMaxQueryStringLength));
-        }
-
-        /// <summary>
-        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
-        /// </summary>
-        /// <param name="options">The max concurrent request options.</param>
-        /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static MidFunc MaxQueryStringLength(MaxQueryStringLengthOptions options)
-        {
-            options.MustNotNull("options");
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxQueryStringLength");
 
             return
                 next =>
                 async env =>
                 {
                     var context = new OwinContext(env);
+                    var requestContext = new RequestContext(context.Request);
+
                     QueryString queryString = context.Request.QueryString;
                     if (queryString.HasValue)
                     {
-                        int maxQueryStringLength = options.MaxQueryStringLength;
+                        int maxQueryStringLength = getMaxQueryStringLength(requestContext);
                         string unescapedQueryString = Uri.UnescapeDataString(queryString.Value);
-                        options.Tracer.AsVerbose("Querystring of request with an unescaped length of {0}", unescapedQueryString.Length);
+                        logger.Debug("Querystring of request with an unescaped length of {0}".FormatWith(unescapedQueryString.Length));
                         if (unescapedQueryString.Length > maxQueryStringLength)
                         {
-                            options.Tracer.AsInfo("Querystring (Length {0}) too long (allowed {1}). Request rejected.",
+                            logger.Info("Querystring (Length {0}) too long (allowed {1}). Request rejected.".FormatWith(
                                 unescapedQueryString.Length,
-                                maxQueryStringLength);
+                                maxQueryStringLength));
                             context.Response.StatusCode = 414;
-                            context.Response.ReasonPhrase = options.LimitReachedReasonPhrase(context.Response.StatusCode);
+                            context.Response.ReasonPhrase = "Request-URI Too Large"; 
                             return;
                         }
-                        options.Tracer.AsVerbose("Querystring length check passed.");
+                        logger.Debug("Querystring length check passed.");
                     }
                     else
                     {
-                        options.Tracer.AsVerbose("No querystring.");
+                        logger.Debug("No querystring.");
                     }
                     await next(env);
                 };
-        }
-
-        /// <summary>
-        /// Limits the length of the query string.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="maxQueryStringLength">Maximum length of the query string.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxQueryStringLength(this BuildFunc builder, int maxQueryStringLength)
-        {
-            builder.MustNotNull("builder");
-
-            return MaxQueryStringLength(builder, () => maxQueryStringLength);
-        }
-
-        /// <summary>
-        /// Limits the length of the query string.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getMaxQueryStringLength">A delegate to get the maximum query string length.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">getMaxQueryStringLength</exception>
-        public static BuildFunc MaxQueryStringLength(this BuildFunc builder, Func<int> getMaxQueryStringLength)
-        {
-            builder.MustNotNull("builder");
-            getMaxQueryStringLength.MustNotNull("getMaxQueryStringLength");
-
-            return MaxQueryStringLength(builder, new MaxQueryStringLengthOptions(getMaxQueryStringLength));
-        }
-
-        /// <summary>
-        /// Limits the length of the query string.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The max querystring length options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static BuildFunc MaxQueryStringLength(this BuildFunc builder, MaxQueryStringLengthOptions options)
-        {
-            builder.MustNotNull("builder");
-            options.MustNotNull("options");
-
-            builder(_ => MaxQueryStringLength(options));
-            return builder;
         }
 
         /// <summary>
@@ -676,18 +339,20 @@
         {
             getMaxContentLength.MustNotNull("getMaxContentLength");
 
-            return MaxRequestContentLength(new MaxRequestContentLengthOptions(getMaxContentLength));
+            return MaxRequestContentLength(_ => getMaxContentLength());
         }
 
         /// <summary>
         /// Limits the length of the request content.
         /// </summary>
-        /// <param name="options">The max request content lenght options.</param>
+        /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static MidFunc MaxRequestContentLength(MaxRequestContentLengthOptions options)
+        /// <exception cref="System.ArgumentNullException">getMaxContentLength</exception>
+        public static MidFunc MaxRequestContentLength(Func<RequestContext, int> getMaxContentLength)
         {
-            options.MustNotNull("options");
+            getMaxContentLength.MustNotNull("getMaxContentLength");
+
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxRequestContentLength");
 
             return
                 next =>
@@ -699,104 +364,59 @@
 
                     if (requestMethod == "GET" || requestMethod == "HEAD")
                     {
-                        options.Tracer.AsVerbose("GET or HEAD request without checking forwarded.");
+                        logger.Debug("GET or HEAD request without checking forwarded.");
                         await next(env);
                         return;
                     }
-                    int maxContentLength = options.MaxContentLength;
-                    options.Tracer.AsVerbose("Max valid content length is {0}.", maxContentLength);
+                    int maxContentLength = getMaxContentLength(new RequestContext(request));
+                    logger.Debug("Max valid content length is {0}.".FormatWith(maxContentLength));
                     if (!IsChunkedRequest(request))
                     {
-                        options.Tracer.AsVerbose("Not a chunked request. Checking content lengt header.");
+                        logger.Debug("Not a chunked request. Checking content lengt header.");
                         string contentLengthHeaderValue = request.Headers.Get("Content-Length");
                         if (contentLengthHeaderValue == null)
                         {
-                            options.Tracer.AsInfo("No content length header provided. Request rejected.");
-                            SetResponseStatusCodeAndReasonPhrase(context, 411, options);
+                            logger.Info("No content length header provided. Request rejected.");
+                            SetResponseStatusCodeAndReasonPhrase(context, 411, "Length Required");
                             return;
                         }
                         int contentLength;
                         if (!int.TryParse(contentLengthHeaderValue, out contentLength))
                         {
-                            options.Tracer.AsInfo("Invalid content length header value. Value: {0}", contentLengthHeaderValue);
-                            SetResponseStatusCodeAndReasonPhrase(context, 400, options);
+                            logger.Info("Invalid content length header value. Value: {0}".FormatWith(contentLengthHeaderValue));
+                            SetResponseStatusCodeAndReasonPhrase(context, 400, "Bad Request");
                             return;
                         }
                         if (contentLength > maxContentLength)
                         {
-                            options.Tracer.AsInfo("Content length of {0} exceeds maximum of {1}. Request rejected.", contentLength, maxContentLength);
-                            SetResponseStatusCodeAndReasonPhrase(context, 413, options);
+                            logger.Info("Content length of {0} exceeds maximum of {1}. Request rejected.".FormatWith(
+                                contentLength,
+                                maxContentLength));
+                            SetResponseStatusCodeAndReasonPhrase(context, 413, "Request Entity Too Large");
                             return;
                         }
-                        options.Tracer.AsVerbose("Content length header check passed.");
+                        logger.Debug("Content length header check passed.");
                     }
                     else
                     {
-                        options.Tracer.AsVerbose("Chunked request. Content length header not checked.");
+                        logger.Debug("Chunked request. Content length header not checked.");
                     }
 
                     request.Body = new ContentLengthLimitingStream(request.Body, maxContentLength);
-                    options.Tracer.AsVerbose("Request body stream configured with length limiting stream of {0}.", maxContentLength);
+                    logger.Debug("Request body stream configured with length limiting stream of {0}.".FormatWith(maxContentLength));
 
                     try
                     {
-                        options.Tracer.AsVerbose("Request forwarded.");
+                        logger.Debug("Request forwarded.");
                         await next(env);
-                        options.Tracer.AsVerbose("Processing finished.");
+                        logger.Debug("Processing finished.");
                     }
                     catch (ContentLengthExceededException)
                     {
-                        options.Tracer.AsInfo("Content length of {0} exceeded. Request canceled and rejected.", maxContentLength);
-                        SetResponseStatusCodeAndReasonPhrase(context, 413, options);
+                        logger.Info("Content length of {0} exceeded. Request canceled and rejected.".FormatWith(maxContentLength));
+                        SetResponseStatusCodeAndReasonPhrase(context, 413, "Request Entity Too Large");
                     }
                 };
-        }
-
-        /// <summary>
-        /// Limits the length of the request content.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="maxContentLength">Maximum length of the content.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxRequestContentLength(this BuildFunc builder, int maxContentLength)
-        {
-            builder.MustNotNull("builder");
-
-            return MaxRequestContentLength(builder, () => maxContentLength);
-        }
-
-        /// <summary>
-        /// Limits the length of the request content.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getMaxContentLength">A delegate to get the maximum content length.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">getMaxContentLength</exception>
-        public static BuildFunc MaxRequestContentLength(this BuildFunc builder, Func<int> getMaxContentLength)
-        {
-            builder.MustNotNull("builder");
-            getMaxContentLength.MustNotNull("getMaxContentLength");
-
-            return MaxRequestContentLength(builder, new MaxRequestContentLengthOptions(getMaxContentLength));
-        }
-
-        /// <summary>
-        /// Limits the length of the request content.
-        /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The max request content length options.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static BuildFunc MaxRequestContentLength(this BuildFunc builder, MaxRequestContentLengthOptions options)
-        {
-            builder.MustNotNull("builder");
-            options.MustNotNull("options");
-
-            builder(_ => MaxRequestContentLength(options));
-            return builder;
         }
 
         /// <summary>
@@ -812,96 +432,138 @@
         /// <summary>
         /// Limits the length of the URL.
         /// </summary>
-        /// <param name="getMaxUrlLength">A delegate to get the maximum URL length.</param>
+        /// <param name="getMaxUrlLength">Maximum length of the URL.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">getMaxUrlLength</exception>
         public static MidFunc MaxUrlLength(Func<int> getMaxUrlLength)
         {
-            getMaxUrlLength.MustNotNull("getMaxUrlLength");
-
-            return MaxUrlLength(new MaxUrlLengthOptions(getMaxUrlLength));
+            return MaxUrlLength(_ => getMaxUrlLength());
         }
 
         /// <summary>
-        /// Limits the length of the request content.
+        /// Limits the length of the URL.
         /// </summary>
-        /// <param name="options">The max request content lenght options.</param>
+        /// <param name="getMaxUrlLength">A delegate to get the maximum URL length.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static MidFunc MaxUrlLength(MaxUrlLengthOptions options)
+        /// <exception cref="System.ArgumentNullException">getMaxUrlLength</exception>
+        public static MidFunc MaxUrlLength(Func<RequestContext, int> getMaxUrlLength)
         {
-            options.MustNotNull("options");
+            getMaxUrlLength.MustNotNull("getMaxUrlLength");
+
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxUrlLength");
 
             return
                 next =>
                 env =>
                 {
                     var context = new OwinContext(env);
-                    int maxUrlLength = options.MaxUrlLength;
+                    int maxUrlLength = getMaxUrlLength(new RequestContext(context.Request));
                     string unescapedUri = Uri.UnescapeDataString(context.Request.Uri.AbsoluteUri);
 
-                    options.Tracer.AsVerbose("Checking request url length.");
+                    logger.Debug("Checking request url length.");
                     if (unescapedUri.Length > maxUrlLength)
                     {
-                        options.Tracer.AsInfo(
-                            "Url \"{0}\"(Length: {2}) exceeds allowed length of {1}. Request rejected.",
+                        logger.Info(
+                            "Url \"{0}\"(Length: {2}) exceeds allowed length of {1}. Request rejected.".FormatWith(
                             unescapedUri,
                             maxUrlLength,
-                            unescapedUri.Length);
+                            unescapedUri.Length));
                         context.Response.StatusCode = 414;
-                        context.Response.ReasonPhrase = options.LimitReachedReasonPhrase(context.Response.StatusCode);
+                        context.Response.ReasonPhrase = "Request-URI Too Large";
                         return Task.FromResult(0);
                     }
-                    options.Tracer.AsVerbose("Check passed. Request forwarded.");
+                    logger.Debug("Check passed. Request forwarded.");
                     return next(env);
                 };
         }
 
         /// <summary>
-        /// Limits the length of the URL.
+        /// Adds a minimum delay before sending the response.
         /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="maxUrlLength">Maximum length of the URL.</param>
-        /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        public static BuildFunc MaxUrlLength(this BuildFunc builder, int maxUrlLength)
+        /// <param name="minDelay">The min response delay, in milliseconds.</param>
+        /// <returns>A midfunc.</returns>
+        public static MidFunc MinResponseDelay(int minDelay)
         {
-            builder.MustNotNull("builder");
-
-            return MaxUrlLength(builder, () => maxUrlLength);
+            return MinResponseDelay(_ => minDelay);
         }
 
         /// <summary>
-        /// Limits the length of the URL.
+        /// Adds a minimum delay before sending the response.
         /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="getMaxUrlLength">A delegate to get the maximum URL length.</param>
+        /// <param name="getMinDelay">A delegate to return the min response delay.</param>
         /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">getMaxUrlLength</exception>
-        public static BuildFunc MaxUrlLength(this BuildFunc builder, Func<int> getMaxUrlLength)
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static MidFunc MinResponseDelay(Func<int> getMinDelay)
         {
-            builder.MustNotNull("builder");
-            getMaxUrlLength.MustNotNull("getMaxUrlLength");
+            getMinDelay.MustNotNull("getMinDelay");
 
-            return MaxUrlLength(builder, new MaxUrlLengthOptions(getMaxUrlLength));
+            return MinResponseDelay(_ => getMinDelay());
         }
 
         /// <summary>
-        /// Limits the length of the URL.
+        /// Adds a minimum delay before sending the response.
         /// </summary>
-        /// <param name="builder">The OWIN builder instance.</param>
-        /// <param name="options">The max url length options.</param>
+        /// <param name="getMinDelay">A delegate to return the min response delay.</param>
         /// <returns>The OWIN builder instance.</returns>
-        /// <exception cref="System.ArgumentNullException">builder</exception>
-        /// <exception cref="System.ArgumentNullException">options</exception>
-        public static BuildFunc MaxUrlLength(this BuildFunc builder, MaxUrlLengthOptions options)
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static MidFunc MinResponseDelay(Func<RequestContext, int> getMinDelay)
         {
-            builder.MustNotNull("builder");
-            options.MustNotNull("options");
+            getMinDelay.MustNotNull("getMinDelay");
 
-            builder(_ => MaxUrlLength(options));
-            return builder;
+            return MinResponseDelay(context => TimeSpan.FromMilliseconds(getMinDelay(context)));
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="minDelay">The min response delay.</param>
+        /// <returns>A midfunc.</returns>
+        public static MidFunc MinResponseDelay(TimeSpan minDelay)
+        {
+            return MinResponseDelay(_ => minDelay);
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="getMinDelay">A delegate to return the min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static MidFunc MinResponseDelay(Func<TimeSpan> getMinDelay)
+        {
+            getMinDelay.MustNotNull("getMinDelay");
+
+            return MinResponseDelay(_ => getMinDelay());
+        }
+
+        /// <summary>
+        /// Adds a minimum delay before sending the response.
+        /// </summary>
+        /// <param name="getMinDelay">A delegate to return the min response delay.</param>
+        /// <returns>The OWIN builder instance.</returns>
+        /// <exception cref="System.ArgumentNullException">getMinDelay</exception>
+        public static MidFunc MinResponseDelay(Func<RequestContext, TimeSpan> getMinDelay)
+        {
+            getMinDelay.MustNotNull("getMinDelay");
+
+            var logger = LogProvider.GetLogger("LimitsMiddleware.MinResponseDelay");
+
+            return
+                next =>
+                env =>
+                {
+                    var context = new OwinContext(env);
+                    var limitsRequestContext = new RequestContext(context.Request);
+                    var delay = getMinDelay(limitsRequestContext);
+
+                    if (delay <= TimeSpan.Zero)
+                    {
+                        return next(env);
+                    }
+
+                    // using explicit continuation because async / await adds some overhead!
+                    return Task.Delay(delay, context.Request.CallCancelled)
+                        .ContinueWith(_ => next(env), context.Request.CallCancelled);
+                };
         }
 
         private static bool IsChunkedRequest(IOwinRequest request)
@@ -910,10 +572,10 @@
             return header != null && header.Equals("chunked", StringComparison.OrdinalIgnoreCase);
         }
 
-        private static void SetResponseStatusCodeAndReasonPhrase(IOwinContext context, int statusCode, MaxRequestContentLengthOptions options)
+        private static void SetResponseStatusCodeAndReasonPhrase(IOwinContext context, int statusCode, string reasonPhrase)
         {
             context.Response.StatusCode = statusCode;
-            context.Response.ReasonPhrase = options.LimitReachedReasonPhrase(context.Response.StatusCode);
+            context.Response.ReasonPhrase = reasonPhrase;
         }
     }
 }

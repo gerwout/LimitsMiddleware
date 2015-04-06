@@ -49,11 +49,32 @@
             limitedTimeSpan.Should().BeGreaterThan(nolimitTimeSpan);
         }
 
+        [Fact]
+        public async Task request_context_is_not_null()
+        {
+            bool requestContextIsNull = true;
+
+            using (var client = CreateHttpClient(context =>
+            {
+                requestContextIsNull = context == null;
+                return 512;
+            }))
+            {
+                await client.GetAsync("http://example.com");
+            }
+
+            requestContextIsNull.Should().BeFalse();
+        }
+
         private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond)
         {
+            return CreateHttpClient(_ => getMaxBytesPerSecond());
+        }
+
+        private static HttpClient CreateHttpClient(Func<RequestContext, int> getMaxBytesPerSecond)
+        {
             return TestServer.Create(builder => builder
-                .UseOwin().MaxBandwidthPerRequest(getMaxBytesPerSecond)
-                .UseAppBuilder(builder)
+                .MaxBandwidthPerRequest(getMaxBytesPerSecond)
                 .Use(async (context, _) =>
                 {
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();

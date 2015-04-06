@@ -90,8 +90,7 @@ namespace LimitsMiddleware
         private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond)
         {
             return TestServer.Create(builder => builder
-                .UseOwin().MaxBandwidthGlobal(getMaxBytesPerSecond)
-                .UseAppBuilder(builder)
+                .MaxBandwidthGlobal(getMaxBytesPerSecond)
                 .Use(async (context, _) =>
                 {
                     byte[] bytes = Enumerable.Repeat((byte)0x1, 1024).ToArray();

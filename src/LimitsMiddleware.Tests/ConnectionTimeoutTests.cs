@@ -17,13 +17,9 @@
         [Fact]
         public void When_time_out_delegate_is_null_then_should_throw()
         {
-            Assert.Throws<ArgumentNullException>(() => Limits.ConnectionTimeout((Func<TimeSpan>)null));
-        }
+            Action act = () => Limits.ConnectionTimeout((Func<TimeSpan>) null);
 
-        [Fact]
-        public void When_options_is_null_then_should_throw()
-        {
-            Assert.Throws<ArgumentNullException>(() => Limits.ConnectionTimeout((ConnectionTimeoutOptions)null));
+            act.ShouldThrow<ArgumentNullException>();
         }
 
         [Fact]
@@ -53,11 +49,32 @@
             response.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
+        [Fact]
+        public async Task request_context_is_not_null()
+        {
+            bool requestContextIsNull = true;
+
+            using (var client = CreateHttpClient(context =>
+            {
+                requestContextIsNull = context == null;
+                return TimeSpan.FromSeconds(1);
+            }))
+            {
+                await client.GetAsync("http://example.com");
+            }
+
+            requestContextIsNull.Should().BeFalse();
+        }
+
         private static HttpClient CreateHttpClient(Func<TimeSpan> getConnectionTimeout)
         {
+            return CreateHttpClient(_ => getConnectionTimeout());
+        }
+
+        private static HttpClient CreateHttpClient(Func<RequestContext, TimeSpan> getConnectionTimeout)
+        {
             return TestServer.Create(builder => builder
-                .UseOwin().ConnectionTimeout(getConnectionTimeout)
-                .UseAppBuilder(builder)
+                .ConnectionTimeout(getConnectionTimeout)
                 .Use(async (context, _) =>
                 {
                     var buffer = new byte[1024];
@@ -83,7 +100,7 @@
             {
                 actual = e.GetType();
             }
-            Assert.Equal(expected, actual);
+            expected.Should().Be(actual);
         }
 
         private class DelayedReadStream : MemoryStream

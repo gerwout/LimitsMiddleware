@@ -1,5 +1,6 @@
 ﻿namespace LimitsMiddleware
 {
+    using System;
     using System.Linq;
     using System.Net;
     using System.Net.Http;
@@ -12,7 +13,7 @@
     public class MaxConcurrentRequestsTests
     {
         [Fact]
-        public async Task When_max_concurrent_request_is_1_then_second_request_should_get_service_unavailable_and_custom_reasonPhrase()
+        public async Task When_max_concurrent_request_is_1_then_second_request_should_get_service_unavailable()
         {
             HttpClient httpClient = CreateHttpClient(1);
             Task<HttpResponseMessage> request1 = httpClient.GetAsync("http://example.com");
@@ -22,7 +23,6 @@
 
             request1.Result.StatusCode.Should().Be(HttpStatusCode.OK);
             request2.Result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
-            request2.Result.ReasonPhrase.Should().Be("custom phrase");
         }
 
         [Fact]
@@ -51,15 +51,32 @@
             request2.Result.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
+        [Fact]
+        public async Task request_context_is_not_null()
+        {
+            bool requestContextIsNull = true;
+
+            using (var client = CreateHttpClient(context =>
+            {
+                requestContextIsNull = context == null;
+                return 1;
+            }))
+            {
+                await client.GetAsync("http://example.com");
+            }
+
+            requestContextIsNull.Should().BeFalse();
+        }
+
         private static HttpClient CreateHttpClient(int maxConcurrentRequests)
         {
+            return CreateHttpClient(_ => maxConcurrentRequests);
+        }
+
+        private static HttpClient CreateHttpClient(Func<RequestContext, int> maxConcurrentRequests)
+        {
             return TestServer.Create(builder => builder
-                .UseOwin().MaxBandwidth(1)
-                .MaxConcurrentRequests(new MaxConcurrentRequestOptions(maxConcurrentRequests)
-                {
-                    LimitReachedReasonPhrase = code => "custom phrase"
-                })
-                .UseAppBuilder(builder)
+                .MaxConcurrentRequests(maxConcurrentRequests)
                 .Use(async (context, _) =>
                 {
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 2).ToArray();
