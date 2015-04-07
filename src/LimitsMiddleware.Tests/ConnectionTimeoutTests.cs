@@ -8,7 +8,7 @@
     using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
-    using Microsoft.Owin.Testing;
+    using Microsoft.Owin.Builder;
     using Owin;
     using Xunit;
 
@@ -73,19 +73,23 @@
 
         private static HttpClient CreateHttpClient(Func<RequestContext, TimeSpan> getConnectionTimeout)
         {
-            return TestServer.Create(builder => builder
-                .ConnectionTimeout(getConnectionTimeout)
+            var app = new AppBuilder();
+            app.ConnectionTimeout(getConnectionTimeout)
                 .Use(async (context, _) =>
                 {
                     var buffer = new byte[1024];
                     await context.Request.Body.ReadAsync(buffer, 0, buffer.Length);
-                    byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();
+                    byte[] bytes = Enumerable.Repeat((byte)0x1, 1024).ToArray();
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
                     context.Response.ContentLength = bytes.LongLength;
                     context.Response.ContentType = "application/octet-stream";
                     await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
-                })).HttpClient;
+                });
+            return new HttpClient(new OwinHttpMessageHandler(app.Build()))
+            {
+                BaseAddress = new Uri("http://localhost")
+            };
         }
 
         private static async Task ThrowsAsync<TException>(Func<Task> func)

@@ -1,10 +1,11 @@
 ﻿namespace LimitsMiddleware
 {
+    using System;
     using System.Net;
     using System.Net.Http;
     using System.Threading.Tasks;
     using FluentAssertions;
-    using Microsoft.Owin.Testing;
+    using Microsoft.Owin.Builder;
     using Owin;
     using Xunit;
 
@@ -53,15 +54,18 @@
 
         private static HttpClient CreateClient(int length, string reasonPhrase = null)
         {
-            reasonPhrase = reasonPhrase ?? string.Empty;
-            return TestServer.Create(builder => builder
-                .MaxQueryStringLength(length)
+            var app = new AppBuilder();
+            app.MaxQueryStringLength(length)
                 .Use((context, next) =>
                 {
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
                     return Task.FromResult(0);
-                })).HttpClient;
+                });
+            return new HttpClient(new OwinHttpMessageHandler(app.Build()))
+            {
+                BaseAddress = new Uri("http://example.com")
+            };
         }
     }
 }

@@ -6,7 +6,7 @@
     using System.Net.Http;
     using System.Threading.Tasks;
     using FluentAssertions;
-    using Microsoft.Owin.Testing;
+    using Microsoft.Owin.Builder;
     using Owin;
     using Xunit;
 
@@ -75,8 +75,8 @@
 
         private static HttpClient CreateHttpClient(Func<RequestContext, int> maxConcurrentRequests)
         {
-            return TestServer.Create(builder => builder
-                .MaxConcurrentRequests(maxConcurrentRequests)
+            var app = new AppBuilder();
+            app.MaxConcurrentRequests(maxConcurrentRequests)
                 .Use(async (context, _) =>
                 {
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 2).ToArray();
@@ -85,7 +85,11 @@
                     context.Response.ContentLength = bytes.LongLength;
                     context.Response.ContentType = "application/octet-stream";
                     await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
-                })).HttpClient;
+                });
+            return new HttpClient(new OwinHttpMessageHandler(app.Build()))
+            {
+                BaseAddress = new Uri("http://localhost")
+            };
         }
     }
 }

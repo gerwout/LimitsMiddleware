@@ -5,7 +5,7 @@
     using System.Net.Http;
     using System.Threading.Tasks;
     using FluentAssertions;
-    using Microsoft.Owin.Testing;
+    using Microsoft.Owin.Builder;
     using Owin;
     using Xunit;
 
@@ -43,15 +43,16 @@
 
         private static HttpClient CreateHttpClient(Func<TimeSpan> getMinDelay)
         {
-            return TestServer.Create(builder => builder
-                .MinResponseDelay(getMinDelay)
+            var app = new AppBuilder();
+            app.MinResponseDelay(getMinDelay)
                 .Use((context, _) =>
                 {
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
 
                     return Task.FromResult(0);
-                })).HttpClient;
+                });
+            return new HttpClient(new OwinHttpMessageHandler(app.Build()));
         }
     }
 }

@@ -6,7 +6,7 @@ namespace LimitsMiddleware
     using System.Net.Http;
     using System.Threading.Tasks;
     using FluentAssertions;
-    using Microsoft.Owin.Testing;
+    using Microsoft.Owin.Builder;
     using Owin;
     using Xunit;
 
@@ -87,18 +87,21 @@ namespace LimitsMiddleware
 
         private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond)
         {
-            return TestServer.Create(builder => builder
-                .MaxBandwidthGlobal(getMaxBytesPerSecond)
+            var app = new AppBuilder();
+            app.MaxBandwidthGlobal(getMaxBytesPerSecond)
                 .Use(async (context, _) =>
                 {
-                    byte[] bytes = Enumerable.Repeat((byte)0x1, 2048).ToArray();
+                    byte[] bytes = Enumerable.Repeat((byte) 0x1, 2048).ToArray();
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
                     context.Response.ContentLength = bytes.LongLength;
                     context.Response.ContentType = "application/octet-stream";
                     await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
-                })).HttpClient;
+                });
+            return new HttpClient(new OwinHttpMessageHandler(app.Build()))
+            {
+                BaseAddress = new Uri("http://localhost")
+            };
         }
-         
     }
 }
