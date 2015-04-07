@@ -15,12 +15,12 @@
         [Fact]
         public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer()
         {
-            int bandwidth = 0;
+            int maxBitsPerSecond = 0;
             // ReSharper disable once AccessToModifiedClosure - yeah we want to modify it...
-            Func<int> getMaxBandwidth = () => bandwidth;
+            Func<int> getMaxBitsPerSecond = () => maxBitsPerSecond;
             var stopwatch = new Stopwatch();
 
-            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
+            using (HttpClient httpClient = CreateHttpClient(getMaxBitsPerSecond))
             {
                 stopwatch.Start();
                 
@@ -30,9 +30,9 @@
             }
 
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
-            bandwidth = 2048;
+            maxBitsPerSecond = 1024 * 8;
 
-            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
+            using (HttpClient httpClient = CreateHttpClient(getMaxBitsPerSecond))
             {
                 stopwatch.Restart();
 
@@ -49,25 +49,26 @@
             limitedTimeSpan.Should().BeGreaterThan(nolimitTimeSpan);
         }
 
-        private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond)
+        private static HttpClient CreateHttpClient(Func<int> getMaxBitsPerSecond)
         {
-            return CreateHttpClient(_ => getMaxBytesPerSecond());
+            return CreateHttpClient(_ => getMaxBitsPerSecond());
         }
 
-        private static HttpClient CreateHttpClient(Func<RequestContext, int> getMaxBytesPerSecond)
+        private static HttpClient CreateHttpClient(Func<RequestContext, int> getMaxBitsPerSecond)
         {
             var app = new AppBuilder();
-            app.MaxBandwidthPerRequest(getMaxBytesPerSecond)
+            app.MaxBandwidthPerRequest(getMaxBitsPerSecond)
                 .Use(async (context, _) =>
                 {
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();
-                    int batches = 10;
+                    int batches = 3;
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
                     context.Response.ContentLength = bytes.LongLength;
                     context.Response.ContentType = "application/octet-stream";
                     for (int i = 0; i < batches; i++)
                     {
+                        await Task.Delay(1);
                         await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
                     }
                 });

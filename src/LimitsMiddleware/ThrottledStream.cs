@@ -11,9 +11,9 @@
     internal class ThrottledStream : Stream
     {
         private readonly Stream _innerStream;
-        private readonly RateLimiter _rateLimiter;
+        private readonly RateLimiterBase _rateLimiter;
 
-        public ThrottledStream(Stream innerStream, RateLimiter rateLimiter)
+        public ThrottledStream(Stream innerStream, RateLimiterBase rateLimiter)
         {
             innerStream.MustNotNull("innerStream");
             rateLimiter.MustNotNull("rateLimiter");
@@ -60,7 +60,7 @@
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            _rateLimiter.Throttle(count).Wait();
+            _rateLimiter.Throttle(count * 8).Wait();
 
             return _innerStream.Read(buffer, offset, count);
         }
@@ -72,7 +72,7 @@
 
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _rateLimiter.Throttle(count);
+            await _rateLimiter.Throttle(count * 8);
             await _innerStream.WriteAsync(buffer, offset, count, cancellationToken);
         }
 

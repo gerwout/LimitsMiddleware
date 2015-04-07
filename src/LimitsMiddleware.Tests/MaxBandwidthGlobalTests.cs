@@ -67,7 +67,7 @@ namespace LimitsMiddleware
             }
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
 
-            bandwidth = 2048;
+            bandwidth = 1024;
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth, 1))
             {
                 stopwatch.Restart();
@@ -110,13 +110,14 @@ namespace LimitsMiddleware
                     }
 
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();
-                    int batches = 10;
+                    const int batches = 10;
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
                     context.Response.ContentLength = bytes.LongLength * batches;
                     context.Response.ContentType = "application/octet-stream";
                     for (int i = 0; i < batches; i++)
                     {
+                        await Task.Delay(1);
                         await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
                     }
                 });

@@ -82,7 +82,7 @@
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
+        /// <param name="maxBytesPerSecond">The maximum number of bits per second to be transferred. Use 0 or a negative
         /// number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
         public static MidFunc MaxBandwidthPerRequest(int maxBytesPerSecond)
@@ -93,27 +93,27 @@
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// <param name="getMaxBitsPerSecond">A delegate to retrieve the maximum number of bits per second to be transferred.
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
-        public static MidFunc MaxBandwidthPerRequest(Func<int> getMaxBytesPerSecond)
+        /// <exception cref="System.ArgumentNullException">getMaxBitsPerSecond</exception>
+        public static MidFunc MaxBandwidthPerRequest(Func<int> getMaxBitsPerSecond)
         {
-            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
+            getMaxBitsPerSecond.MustNotNull("getMaxBitsPerSecond");
 
-            return MaxBandwidthPerRequest(_ => getMaxBytesPerSecond());
+            return MaxBandwidthPerRequest(_ => getMaxBitsPerSecond());
         }
 
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// <param name="getMaxBitsPerSecond">A delegate to retrieve the maximum number of bits per second to be transferred.
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
-        public static MidFunc MaxBandwidthPerRequest(Func<RequestContext, int> getMaxBytesPerSecond)
+        /// <exception cref="System.ArgumentNullException">getMaxBitsPerSecond</exception>
+        public static MidFunc MaxBandwidthPerRequest(Func<RequestContext, int> getMaxBitsPerSecond)
         {
-            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
+            getMaxBitsPerSecond.MustNotNull("getMaxBitsPerSecond");
 
             var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthPerRequest");
 
@@ -128,8 +128,8 @@
                     var limitsRequestContext = new RequestContext(context.Request);
 
                     logger.Debug("Configure streams to be limited.");
-                    context.Request.Body = new ThrottledStream(requestBodyStream, new RateLimiter(() => getMaxBytesPerSecond(limitsRequestContext)));
-                    context.Response.Body = new ThrottledStream(responseBodyStream, new RateLimiter(() => getMaxBytesPerSecond(limitsRequestContext)));
+                    context.Request.Body = new ThrottledStream(requestBodyStream, new PerRequestRateLimiter(getMaxBitsPerSecond(limitsRequestContext)));
+                    context.Response.Body = new ThrottledStream(responseBodyStream, new PerRequestRateLimiter(getMaxBitsPerSecond(limitsRequestContext)));
 
                     //TODO consider SendFile interception
                     logger.Debug("With configured limit forwarded.");
@@ -140,27 +140,27 @@
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
+        /// <param name="maxBitsPerSecond">The maximum number of bits per second to be transferred. Use 0 or a negative
         /// number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        public static MidFunc MaxBandwidthGlobal(int maxBytesPerSecond)
+        public static MidFunc MaxBandwidthGlobal(int maxBitsPerSecond)
         {
-            return MaxBandwidthGlobal(() => maxBytesPerSecond);
+            return MaxBandwidthGlobal(() => maxBitsPerSecond);
         }
 
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// <param name="getMaxBitsPerSecond">A delegate to retrieve the maximum number of bits per second to be transferred.
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
-        public static MidFunc MaxBandwidthGlobal(Func<int> getMaxBytesPerSecond)
+        /// <exception cref="System.ArgumentNullException">getMaxBitsPerSecond</exception>
+        public static MidFunc MaxBandwidthGlobal(Func<int> getMaxBitsPerSecond)
         {
-            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
+            getMaxBitsPerSecond.MustNotNull("getMaxBitsPerSecond");
 
             var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthGlobal");
-            var rateLimiter = new RateLimiter(getMaxBytesPerSecond);
+            var rateLimiter = new RateLimiter(getMaxBitsPerSecond);
 
             return
                 next =>

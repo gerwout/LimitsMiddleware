@@ -4,7 +4,7 @@
     using System.Threading;
     using System.Threading.Tasks;
 
-    internal class RateLimiter
+    internal class RateLimiter : RateLimiterBase
     {
         private readonly Func<int> _getMaxBytesPerSecond;
         private long _byteCount;
@@ -25,7 +25,7 @@
             _resetting = new InterlockedBoolean();
         }
 
-        public async Task Throttle(int bufferSizeInBytes)
+        public override async Task Throttle(int bufferSizeInBytes)
         {
             // Make sure the buffer isn't empty.
             int maximumBytesPerSecond = _getMaxBytesPerSecond();
