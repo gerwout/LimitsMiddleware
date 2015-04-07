@@ -49,7 +49,7 @@ task RunTests -depends Compile {
 		if(!(Test-Path $reportsDir\xUnit\$project)){
 			New-Item $reportsDir\xUnit\$project -Type Directory
 		}
-        .$xunitRunner "$srcDir\$project\bin\Release\$project.dll" -html "$reportsDir\xUnit\$project\index.html"
+        exec { .$xunitRunner "$srcDir\$project\bin\Release\$project.dll" -html "$reportsDir\xUnit\$project\index.html" }
     }
 }
 
