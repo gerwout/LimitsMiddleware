@@ -49,23 +49,6 @@
             limitedTimeSpan.Should().BeGreaterThan(nolimitTimeSpan);
         }
 
-        [Fact]
-        public async Task request_context_is_not_null()
-        {
-            bool requestContextIsNull = true;
-
-            using (var client = CreateHttpClient(context =>
-            {
-                requestContextIsNull = context == null;
-                return 512;
-            }))
-            {
-                await client.GetAsync("http://example.com");
-            }
-
-            requestContextIsNull.Should().BeFalse();
-        }
-
         private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond)
         {
             return CreateHttpClient(_ => getMaxBytesPerSecond());

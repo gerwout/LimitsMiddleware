@@ -49,23 +49,6 @@
             response.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
-        [Fact]
-        public async Task request_context_is_not_null()
-        {
-            bool requestContextIsNull = true;
-
-            using (var client = CreateHttpClient(context =>
-            {
-                requestContextIsNull = context == null;
-                return TimeSpan.FromSeconds(1);
-            }))
-            {
-                await client.GetAsync("http://example.com");
-            }
-
-            requestContextIsNull.Should().BeFalse();
-        }
-
         private static HttpClient CreateHttpClient(Func<TimeSpan> getConnectionTimeout)
         {
             return CreateHttpClient(_ => getConnectionTimeout());
