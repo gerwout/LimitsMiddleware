@@ -30,7 +30,7 @@
             }
 
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
-            maxBitsPerSecond = 1024 * 8;
+            maxBitsPerSecond = 1024 * 8; // 8 kpbs
 
             using (HttpClient httpClient = CreateHttpClient(getMaxBitsPerSecond))
             {

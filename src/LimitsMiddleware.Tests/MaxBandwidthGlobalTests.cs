@@ -117,7 +117,7 @@ namespace LimitsMiddleware
                     context.Response.ContentType = "application/octet-stream";
                     for (int i = 0; i < batches; i++)
                     {
-                        await Task.Delay(1);
+                        await Task.Delay(1); //forces actual asynchrony
                         await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
                     }
                 });
