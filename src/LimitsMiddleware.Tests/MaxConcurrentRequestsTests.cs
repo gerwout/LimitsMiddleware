@@ -4,6 +4,7 @@
     using System.Linq;
     using System.Net;
     using System.Net.Http;
+    using System.Runtime.InteropServices;
     using System.Threading.Tasks;
     using FluentAssertions;
     using Microsoft.Owin.Builder;
@@ -15,65 +16,53 @@
         [Fact]
         public async Task When_max_concurrent_request_is_1_then_second_request_should_get_service_unavailable()
         {
-            HttpClient httpClient = CreateHttpClient(1);
-            Task<HttpResponseMessage> request1 = httpClient.GetAsync("http://example.com");
-            Task<HttpResponseMessage> request2 = httpClient.GetAsync("http://example.com");
+            var tcs = new TaskCompletionSource<int>();
+            var client = CreateHttpClient(1, tcs.Task);
+            var response1 = await client.GetAsync("/", HttpCompletionOption.ResponseHeadersRead);
+            var response2 = await client.GetAsync("/", HttpCompletionOption.ResponseHeadersRead);
 
-            await Task.WhenAll(request1, request2);
+            tcs.SetResult(0);
 
-            request1.Result.StatusCode.Should().Be(HttpStatusCode.OK);
-            request2.Result.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+            response1.StatusCode.Should().Be(HttpStatusCode.OK);
+            response2.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
         }
 
         [Fact]
         public async Task When_max_concurrent_request_is_2_then_second_request_should_get_ok()
         {
-            HttpClient httpClient = CreateHttpClient(2);
-            Task<HttpResponseMessage> request1 = httpClient.GetAsync("http://example.com");
-            Task<HttpResponseMessage> request2 = httpClient.GetAsync("http://example.com");
+            var tcs = new TaskCompletionSource<int>();
+            var client = CreateHttpClient(2, tcs.Task);
+            var response1 = await client.GetAsync("/", HttpCompletionOption.ResponseHeadersRead);
+            var response2 = await client.GetAsync("/", HttpCompletionOption.ResponseHeadersRead);
 
-            await Task.WhenAll(request1, request2);
+            tcs.SetResult(0);
 
-            request1.Result.StatusCode.Should().Be(HttpStatusCode.OK);
-            request2.Result.StatusCode.Should().Be(HttpStatusCode.OK);
+            response1.StatusCode.Should().Be(HttpStatusCode.OK);
+            response2.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
         [Fact]
         public async Task When_max_concurrent_request_is_0_then_second_request_should_get_ok()
         {
-            HttpClient httpClient = CreateHttpClient(0);
-            Task<HttpResponseMessage> request1 = httpClient.GetAsync("http://example.com");
-            Task<HttpResponseMessage> request2 = httpClient.GetAsync("http://example.com");
+            var tcs = new TaskCompletionSource<int>();
+            var client = CreateHttpClient(0, tcs.Task);
+            var response1 = await client.GetAsync("/", HttpCompletionOption.ResponseHeadersRead);
+            var response2 = await client.GetAsync("/", HttpCompletionOption.ResponseHeadersRead);
 
-            await Task.WhenAll(request1, request2);
+            tcs.SetResult(0);
 
-            request1.Result.StatusCode.Should().Be(HttpStatusCode.OK);
-            request2.Result.StatusCode.Should().Be(HttpStatusCode.OK);
+            response1.StatusCode.Should().Be(HttpStatusCode.OK);
+            response2.StatusCode.Should().Be(HttpStatusCode.OK);
         }
 
-        [Fact]
-        public async Task request_context_is_not_null()
+        private static HttpClient CreateHttpClient(int maxConcurrentRequests, Task waitHandle)
         {
-            bool requestContextIsNull = true;
-
-            using (var client = CreateHttpClient(context =>
-            {
-                requestContextIsNull = context == null;
-                return 1;
-            }))
-            {
-                await client.GetAsync("http://example.com");
-            }
-
-            requestContextIsNull.Should().BeFalse();
+            return CreateHttpClient(_ => maxConcurrentRequests, waitHandle);
         }
 
-        private static HttpClient CreateHttpClient(int maxConcurrentRequests)
-        {
-            return CreateHttpClient(_ => maxConcurrentRequests);
-        }
-
-        private static HttpClient CreateHttpClient(Func<RequestContext, int> maxConcurrentRequests)
+        private static HttpClient CreateHttpClient(
+            Func<RequestContext, int> maxConcurrentRequests,
+            Task waitHandle)
         {
             var app = new AppBuilder();
             app.MaxConcurrentRequests(maxConcurrentRequests)
@@ -82,13 +71,17 @@
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 2).ToArray();
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
-                    context.Response.ContentLength = bytes.LongLength;
+                    context.Response.ContentLength = bytes.LongLength * 2;
                     context.Response.ContentType = "application/octet-stream";
+
+                    // writing the response body flushes the headers
+                    await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
+                    await waitHandle;
                     await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
                 });
             return new HttpClient(new OwinHttpMessageHandler(app.Build()))
             {
-                BaseAddress = new Uri("http://localhost")
+                BaseAddress = new Uri("http://example.com")
             };
         }
     }
