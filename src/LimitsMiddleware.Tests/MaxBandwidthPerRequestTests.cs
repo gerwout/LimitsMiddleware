@@ -30,7 +30,7 @@
             }
 
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
-            bandwidth = 512;
+            bandwidth = 2048;
 
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
             {
@@ -61,11 +61,15 @@
                 .Use(async (context, _) =>
                 {
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();
+                    int batches = 10;
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
                     context.Response.ContentLength = bytes.LongLength;
                     context.Response.ContentType = "application/octet-stream";
-                    await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
+                    for (int i = 0; i < batches; i++)
+                    {
+                        await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
+                    }
                 });
             return new HttpClient(new OwinHttpMessageHandler(app.Build()))
             {
