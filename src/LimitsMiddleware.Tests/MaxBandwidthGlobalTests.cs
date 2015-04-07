@@ -30,7 +30,8 @@ namespace LimitsMiddleware
                 stopwatch.Stop();
             }
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
-            bandwidth = 1536; // ensuring there is an overlap
+
+            bandwidth = 1024;
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
             {
                 stopwatch.Restart();
@@ -64,11 +65,9 @@ namespace LimitsMiddleware
 
                 stopwatch.Stop();
             }
-
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
 
-            bandwidth = 1536; // ensuring there is an overlap
-
+            bandwidth = 1024;
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
             {
                 stopwatch.Restart();
@@ -77,7 +76,6 @@ namespace LimitsMiddleware
 
                 stopwatch.Stop();
             }
-
             TimeSpan limitedTimeSpan = stopwatch.Elapsed;
 
             Console.WriteLine(nolimitTimeSpan);
@@ -93,7 +91,7 @@ namespace LimitsMiddleware
                 .MaxBandwidthGlobal(getMaxBytesPerSecond)
                 .Use(async (context, _) =>
                 {
-                    byte[] bytes = Enumerable.Repeat((byte)0x1, 1024).ToArray();
+                    byte[] bytes = Enumerable.Repeat((byte)0x1, 2048).ToArray();
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
                     context.Response.ContentLength = bytes.LongLength;
