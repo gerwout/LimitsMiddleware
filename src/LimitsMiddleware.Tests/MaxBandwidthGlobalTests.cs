@@ -4,6 +4,7 @@ namespace LimitsMiddleware
     using System.Diagnostics;
     using System.Linq;
     using System.Net.Http;
+    using System.Threading;
     using System.Threading.Tasks;
     using FluentAssertions;
     using Microsoft.Owin.Builder;
@@ -13,31 +14,29 @@ namespace LimitsMiddleware
     public class MaxBandwidthGlobalTests
     {
         [Fact]
-        public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer_for_multiple_requests()
+        public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer_for_multiple_concurrent_requests()
         {
             int bandwidth = 0;
             // ReSharper disable once AccessToModifiedClosure - yeah we want to modify it...
             Func<int> getMaxBandwidth = () => bandwidth;
-
             var stopwatch = new Stopwatch();
-            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
+
+            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth, 2))
             {
                 stopwatch.Start();
 
-                await httpClient.GetAsync("http://example.com");
-                await httpClient.GetAsync("http://example.com");
+                await Task.WhenAll(httpClient.GetAsync("/"), httpClient.GetAsync("/"));
 
                 stopwatch.Stop();
             }
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
 
             bandwidth = 1024;
-            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
+            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth, 2))
             {
                 stopwatch.Restart();
 
-                await httpClient.GetAsync("http://example.com");
-                await httpClient.GetAsync("http://example.com");
+                await Task.WhenAll(httpClient.GetAsync("/"), httpClient.GetAsync("/"));
 
                 stopwatch.Stop();
             }
@@ -50,29 +49,31 @@ namespace LimitsMiddleware
         }
 
         [Fact]
-        public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer_for_multiple_concurrent_requests()
+        public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer_for_multiple_requests()
         {
             int bandwidth = 0;
             // ReSharper disable once AccessToModifiedClosure - yeah we want to modify it...
             Func<int> getMaxBandwidth = () => bandwidth;
-            var stopwatch = new Stopwatch();
 
-            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
+            var stopwatch = new Stopwatch();
+            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth, 1))
             {
                 stopwatch.Start();
 
-                await Task.WhenAll(httpClient.GetAsync("http://example.com"), httpClient.GetAsync("http://example.com"));
+                await httpClient.GetAsync("/");
+                await httpClient.GetAsync("/");
 
                 stopwatch.Stop();
             }
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
 
             bandwidth = 1024;
-            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth))
+            using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth, 1))
             {
                 stopwatch.Restart();
 
-                await Task.WhenAll(httpClient.GetAsync("http://example.com"), httpClient.GetAsync("http://example.com"));
+                await httpClient.GetAsync("/");
+                await httpClient.GetAsync("/");
 
                 stopwatch.Stop();
             }
@@ -84,13 +85,30 @@ namespace LimitsMiddleware
             limitedTimeSpan.Should().BeGreaterThan(nolimitTimeSpan);
         }
 
-
-        private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond)
+        private static HttpClient CreateHttpClient(Func<int> getMaxBytesPerSecond, int forceConcurrentCount)
         {
+            // This blocks client responses until the number of concurrent clients 
+            // has reached the desired value.
+            var tcs = new TaskCompletionSource<int>();
+            Action requestReceived = () =>
+            {
+                if (Interlocked.Decrement(ref forceConcurrentCount) == 0)
+                {
+                    tcs.SetResult(0);
+                }
+            };
+
             var app = new AppBuilder();
             app.MaxBandwidthGlobal(getMaxBytesPerSecond)
                 .Use(async (context, _) =>
                 {
+                    requestReceived();
+                    var delayTask = Task.Delay(5000);
+                    if (await Task.WhenAny(delayTask, tcs.Task) == delayTask)
+                    {
+                        throw new TimeoutException("Timedout waiting for concurrent clients.");
+                    }
+
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 2048).ToArray();
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
@@ -100,7 +118,7 @@ namespace LimitsMiddleware
                 });
             return new HttpClient(new OwinHttpMessageHandler(app.Build()))
             {
-                BaseAddress = new Uri("http://localhost")
+                BaseAddress = new Uri("http://example.com")
             };
         }
     }
