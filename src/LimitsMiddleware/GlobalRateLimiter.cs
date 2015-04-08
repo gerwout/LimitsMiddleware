@@ -1,10 +1,11 @@
 ﻿namespace LimitsMiddleware
 {
     using System;
+    using System.Collections.Generic;
     using System.Threading;
     using System.Threading.Tasks;
 
-    internal class RateLimiter : RateLimiterBase
+    internal class GlobalRateLimiter : RateLimiterBase
     {
         private readonly Func<int> _getMaxBytesPerSecond;
         private long _byteCount;
@@ -16,7 +17,7 @@
             get { return Environment.TickCount; }
         }
 
-        public RateLimiter(Func<int> getMaxBytesPerSecond)
+        public GlobalRateLimiter(Func<int> getMaxBytesPerSecond)
         {
             _getMaxBytesPerSecond = getMaxBytesPerSecond;
 
@@ -86,6 +87,49 @@
             }
 
             _resetting.Set(false);
+        }
+
+        internal class MovingAverage
+        {
+            private readonly TimeSpan _samplingInterval;
+            private TimeSpan _currentInterval = TimeSpan.Zero;
+            private readonly LinkedList<Interval> _intervals = new LinkedList<Interval>();
+            private int _totalBytesWritten;
+
+            public MovingAverage(TimeSpan samplingInterval)
+            {
+                _samplingInterval = samplingInterval;
+            }
+
+            public double Average { get; private set; }
+
+            public void AddInterval(int bytesWritten, TimeSpan timespan)
+            {
+                _intervals.AddLast(new Interval(bytesWritten, timespan));
+                _totalBytesWritten += bytesWritten;
+                _currentInterval += timespan;
+
+                while (_currentInterval - _intervals.First.Value.TimeSpan >= _samplingInterval)
+                {
+                    _currentInterval -= _intervals.First.Value.TimeSpan;
+                    _totalBytesWritten -= _intervals.First.Value.BytesWritten;
+                    _intervals.RemoveFirst();
+                }
+
+                Average = _totalBytesWritten / _currentInterval.TotalSeconds;
+            }
+
+            private class Interval
+            {
+                internal readonly int BytesWritten;
+                internal readonly TimeSpan TimeSpan;
+
+                public Interval(int bytesWritten, TimeSpan timeSpan)
+                {
+                    BytesWritten = bytesWritten;
+                    TimeSpan = timeSpan;
+                }
+            }
         }
     }
 }

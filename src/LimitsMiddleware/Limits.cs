@@ -102,7 +102,7 @@
             getMaxBitsPerSecond.MustNotNull("getMaxBytesToWrite");
 
             var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthGlobal");
-            var rateLimiter = new RateLimiter(getMaxBitsPerSecond);
+            var rateLimiter = new GlobalRateLimiter(getMaxBitsPerSecond);
 
             return
                 next =>

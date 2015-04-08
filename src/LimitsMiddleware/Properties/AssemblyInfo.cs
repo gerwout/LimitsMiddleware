@@ -1,4 +1,6 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
-[assembly: AssemblyTitle("Owin.SiteMapping")]
+[assembly: AssemblyTitle("LimitsMiddleware")]
 [assembly: AssemblyDescription("")]
+[assembly: InternalsVisibleTo("LimitsMiddleware.Tests")]

@@ -58,7 +58,7 @@
     <Compile Include="PerRequestRateLimiter.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RateLimiter.cs" />
+    <Compile Include="GlobalRateLimiter.cs" />
     <Compile Include="RateLimiterBase.cs" />
     <Compile Include="RequestContext.cs" />
     <Compile Include="StringExtension.cs" />
