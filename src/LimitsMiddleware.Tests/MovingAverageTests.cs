@@ -21,7 +21,7 @@ namespace LimitsMiddleware
         }
 
         [Fact]
-        public void Blah3()
+        public void Should_calculate_moving_average_within_window()
         {
             var movingAverage = new GlobalRateLimiter.MovingAverage(TimeSpan.FromSeconds(5));
 
