@@ -1,6 +1,8 @@
 Limits Middleware
 ===========
 
+[![Join the chat at https://gitter.im/damianh/LimitsMiddleware](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/damianh/LimitsMiddleware?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 [![Build status](https://ci.appveyor.com/api/projects/status/o6bm02n8stya868r)](https://ci.appveyor.com/project/damianh/limitsmiddleware) [![NuGet Status](http://img.shields.io/nuget/v/LimitsMiddleware.svg?style=flat)](https://www.nuget.org/packages/LimitsMiddleware/) [![NuGet Status](http://img.shields.io/nuget/v/LimitsMiddleware.OwinAppBuilder.svg?style=flat)](https://www.nuget.org/packages/LimitsMiddleware.OwinAppBuilder/)
 
 OWIN middleware to apply limits to an OWIN pipeline:
