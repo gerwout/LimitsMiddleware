@@ -25,22 +25,24 @@
             _resetting = new InterlockedBoolean();
         }
 
-        public override async Task Throttle(int bufferSizeInBytes)
+        public override async Task Throttle(int bytesToWrite)
         {
             // Make sure the buffer isn't empty.
             int maximumBytesPerSecond = _getMaxBytesPerSecond();
 
-            if (maximumBytesPerSecond <= 0 || bufferSizeInBytes <= 0)
+            if (maximumBytesPerSecond <= 0 || bytesToWrite <= 0)
             {
                 return;
             }
-            Interlocked.Add(ref _byteCount, bufferSizeInBytes);
+            Interlocked.Add(ref _byteCount, bytesToWrite);
             long elapsedMilliseconds = CurrentMilliseconds - _start;
 
             if (elapsedMilliseconds >= 0)
             {
                 // Calculate the current bps.
-                long bps = elapsedMilliseconds == 0 ? long.MaxValue : _byteCount / (elapsedMilliseconds * 1000L);
+                long bps = elapsedMilliseconds == 0 
+                    ? long.MaxValue : 
+                    _byteCount / (elapsedMilliseconds * 1000L);
 
                 // If the bps are more then the maximum bps, try to throttle.
                 if (bps > maximumBytesPerSecond)

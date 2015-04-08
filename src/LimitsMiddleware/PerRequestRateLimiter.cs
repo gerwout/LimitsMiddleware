@@ -1,63 +1,64 @@
 ﻿namespace LimitsMiddleware
 {
+    using System;
     using System.Diagnostics;
     using System.Threading;
     using System.Threading.Tasks;
 
     internal class PerRequestRateLimiter : RateLimiterBase
     {
-        private readonly int _maxBitsPerSecond;
+        private readonly int _maxBytesPerSecond;
         private Stopwatch _stopWatch;
-        private long _bitCount;
+        private long _byteCount;
         private const int MaxSleepMilliseconds = 10000;
 
-        internal PerRequestRateLimiter(int maxBitsPerSecond)
+        internal PerRequestRateLimiter(int maxBytesPerSecond)
         {
-            _maxBitsPerSecond = maxBitsPerSecond;
+            _maxBytesPerSecond = maxBytesPerSecond;
         }
 
-        public override async Task Throttle(int bitsToWrite)
+        public override async Task Throttle(int bytesToWrite)
         {
-            if (_maxBitsPerSecond <= 0)
+            if (_maxBytesPerSecond <= 0)
             {
                 // no throttling
                 return;
             }
-            _bitCount += bitsToWrite;
+            _byteCount += bytesToWrite;
+
             if (_stopWatch == null)
             {
                 // don't start timer until first write and only throttle on second and subsequent writes
                 _stopWatch = Stopwatch.StartNew();
                 return;
             }
-            long elapsedMilliseconds = _stopWatch.ElapsedMilliseconds;
-            if (elapsedMilliseconds > 0)
+            double elapsedMilliseconds = _stopWatch.Elapsed.TotalMilliseconds;
+            elapsedMilliseconds = (Math.Abs(elapsedMilliseconds) < 0.001) ? 1 : elapsedMilliseconds;
+
+            // Calculate the current bps.
+            double elapsedSeconds = elapsedMilliseconds/1000D;
+            double bytesPerSecond = _byteCount / elapsedSeconds;
+
+            // If the bps are more then the maximum bps, try to throttle.
+            if (bytesPerSecond > _maxBytesPerSecond)
             {
-                // Calculate the current bps.
-                double elapsedSeconds = elapsedMilliseconds/1000D;
-                double bps = _bitCount / elapsedSeconds;
+                // Calculate the time to delay.
+                double desiredTotalMilliseconds = ((double)_byteCount / _maxBytesPerSecond) * 1000;
+                double millisecondsToSleep = desiredTotalMilliseconds - elapsedMilliseconds;
+                millisecondsToSleep = millisecondsToSleep < MaxSleepMilliseconds
+                    ? millisecondsToSleep
+                    : MaxSleepMilliseconds;
 
-                // If the bps are more then the maximum bps, try to throttle.
-                if (bps > _maxBitsPerSecond)
+                if (millisecondsToSleep > 1)
                 {
-                    // Calculate the time to delay.
-                    double desiredTotalMilliseconds = ((double)_bitCount / _maxBitsPerSecond) * 1000;
-                    double millisecondsToSleep = desiredTotalMilliseconds - elapsedMilliseconds;
-                    millisecondsToSleep = millisecondsToSleep < MaxSleepMilliseconds
-                        ? millisecondsToSleep
-                        : MaxSleepMilliseconds;
-
-                    if (millisecondsToSleep > 1)
+                    try
                     {
-                        try
-                        {
-                            // The time to sleep is more then a millisecond, so sleep.
-                            await Task.Delay((int)millisecondsToSleep);
-                        }
-                        catch (ThreadAbortException)
-                        {
-                            // Eatup ThreadAbortException.
-                        }
+                        // The time to sleep is more then a millisecond, so sleep.
+                        await Task.Delay((int)millisecondsToSleep);
+                    }
+                    catch (ThreadAbortException)
+                    {
+                        // Eatup ThreadAbortException.
                     }
                 }
             }

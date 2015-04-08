@@ -4,6 +4,6 @@
 
     internal abstract class RateLimiterBase
     {
-        public abstract Task Throttle(int writeLength);
+        public abstract Task Throttle(int bytesToWrite);
     }
 }

@@ -54,6 +54,7 @@
     <Compile Include="ContentLengthLimitingStream.cs" />
     <Compile Include="DefaultDelegateHelper.cs" />
     <Compile Include="Guard.cs" />
+    <Compile Include="Limits.MaxBandwidthPerRequest.cs" />
     <Compile Include="PerRequestRateLimiter.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

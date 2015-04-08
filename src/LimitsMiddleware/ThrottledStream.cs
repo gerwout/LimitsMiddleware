@@ -60,7 +60,7 @@
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            _rateLimiter.Throttle(count * 8).Wait();
+            _rateLimiter.Throttle(count).Wait();
 
             return _innerStream.Read(buffer, offset, count);
         }
@@ -72,7 +72,7 @@
 
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _rateLimiter.Throttle(count * 8);
+            await _rateLimiter.Throttle(count);
             await _innerStream.WriteAsync(buffer, offset, count, cancellationToken);
         }
 

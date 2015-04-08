@@ -2,77 +2,74 @@
 {
     using System;
     using System.Diagnostics;
-    using System.Linq;
+    using System.Net;
     using System.Net.Http;
     using System.Threading.Tasks;
     using FluentAssertions;
     using Microsoft.Owin.Builder;
+    using Microsoft.Owin.FileSystems;
+    using Microsoft.Owin.StaticFiles;
     using Owin;
     using Xunit;
 
     public class MaxBandwidthPerRequestTests
     {
-        [Fact]
-        public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer()
+        [Theory]
+        [InlineData("file_64KB.txt", 8000, 8)]
+        [InlineData("file_64KB.txt", 16000, 4)]
+        [InlineData("file_512KB.txt", 100000, 5)]
+        [InlineData("file_512KB.txt", 250000, 2)]
+        public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer(
+            string file,
+            int maxBytes,
+            int approximateSeconds)
         {
-            int maxBitsPerSecond = 0;
-            // ReSharper disable once AccessToModifiedClosure - yeah we want to modify it...
-            Func<int> getMaxBitsPerSecond = () => maxBitsPerSecond;
             var stopwatch = new Stopwatch();
-
-            using (HttpClient httpClient = CreateHttpClient(getMaxBitsPerSecond))
+            using (HttpClient httpClient = CreateHttpClient(0))
             {
                 stopwatch.Start();
-                
-                await httpClient.GetAsync("http://example.com");
+
+                var response = await httpClient.GetAsync(file);
+                response.StatusCode.Should().Be(HttpStatusCode.OK);
 
                 stopwatch.Stop();
             }
-
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
-            maxBitsPerSecond = 1024 * 8; // 8 kpbs
-
-            using (HttpClient httpClient = CreateHttpClient(getMaxBitsPerSecond))
+            
+            using (HttpClient httpClient = CreateHttpClient(maxBytes))
             {
                 stopwatch.Restart();
 
-                await httpClient.GetAsync("http://example.com");
+                var response = await httpClient.GetAsync(file);
+                response.StatusCode.Should().Be(HttpStatusCode.OK);
 
                 stopwatch.Stop();
             }
-
             TimeSpan limitedTimeSpan = stopwatch.Elapsed;
 
-            Console.WriteLine(nolimitTimeSpan);
-            Console.WriteLine(limitedTimeSpan);
+            Console.WriteLine("No limits: {0}", nolimitTimeSpan);
+            Console.WriteLine("Limited  : {0}", limitedTimeSpan);
 
             limitedTimeSpan.Should().BeGreaterThan(nolimitTimeSpan);
+
+            var abs = Math.Abs((limitedTimeSpan.TotalSeconds - nolimitTimeSpan.TotalSeconds) - approximateSeconds);
+            (abs < 1).Should().BeTrue();
         }
 
-        private static HttpClient CreateHttpClient(Func<int> getMaxBitsPerSecond)
+        private static HttpClient CreateHttpClient(int maxBytesPerSecond)
         {
-            return CreateHttpClient(_ => getMaxBitsPerSecond());
-        }
+            var staticFileOptions = new StaticFileOptions
+            {
+                FileSystem = new EmbeddedResourceFileSystem(
+                    typeof(MaxBandwidthPerRequestTests).Assembly,
+                    "LimitsMiddleware.Files")
+            };
+            var appFunc = new AppBuilder()
+                .MaxBandwidthPerRequest(maxBytesPerSecond)
+                .UseStaticFiles(staticFileOptions)
+                .Build();
 
-        private static HttpClient CreateHttpClient(Func<RequestContext, int> getMaxBitsPerSecond)
-        {
-            var app = new AppBuilder();
-            app.MaxBandwidthPerRequest(getMaxBitsPerSecond)
-                .Use(async (context, _) =>
-                {
-                    byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();
-                    int batches = 3;
-                    context.Response.StatusCode = 200;
-                    context.Response.ReasonPhrase = "OK";
-                    context.Response.ContentLength = bytes.LongLength;
-                    context.Response.ContentType = "application/octet-stream";
-                    for (int i = 0; i < batches; i++)
-                    {
-                        await Task.Delay(1);
-                        await context.Response.Body.WriteAsync(bytes, 0, bytes.Length);
-                    }
-                });
-            return new HttpClient(new OwinHttpMessageHandler(app.Build()))
+            return new HttpClient(new OwinHttpMessageHandler(appFunc))
             {
                 BaseAddress = new Uri("http://localhost")
             };
