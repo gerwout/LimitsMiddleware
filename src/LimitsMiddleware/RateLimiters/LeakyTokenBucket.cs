@@ -5,8 +5,8 @@
     public abstract class LeakyTokenBucket : TokenBucket
     {
         protected readonly long StepTokens;
-        protected readonly long ticksRefillInterval;
-        protected readonly long ticksStepInterval;
+        protected readonly long TicksRefillInterval;
+        protected readonly long TicksStepInterval;
         protected long NextRefillTime;
 
         protected LeakyTokenBucket(long maxTokens, long refillInterval, int refillIntervalInMilliSeconds,
@@ -37,8 +37,8 @@
                     "Step interval in milliseconds cannot be negative");
             }
 
-            ticksRefillInterval = TimeSpan.FromMilliseconds(refillInterval*refillIntervalInMilliSeconds).Ticks;
-            ticksStepInterval = TimeSpan.FromMilliseconds(stepInterval*stepIntervalInMilliseconds).Ticks;
+            TicksRefillInterval = TimeSpan.FromMilliseconds(refillInterval*refillIntervalInMilliSeconds).Ticks;
+            TicksStepInterval = TimeSpan.FromMilliseconds(stepInterval*stepIntervalInMilliseconds).Ticks;
         }
     }
 }

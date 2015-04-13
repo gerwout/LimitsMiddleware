@@ -13,10 +13,11 @@
         private const long NLessThanMax = 2;
         private const long NGreaterThanMax = 12;
         private const int Cumulative = 2;
+        private GetUtcNow _getUtcNow = () => SystemClock.GetUtcNow();
 
         public FixedTokenBucketTests()
         {
-            _bucket = new FixedTokenBucket(MaxTokens, RefillInterval, 1000);
+            _bucket = new FixedTokenBucket(MaxTokens, RefillInterval, 1000, _getUtcNow);
         }
 
         [Fact]
@@ -68,15 +69,15 @@
         [Fact]
         public void ShouldThrottle_WhenCalledWithNLessThanMaxSleepNLessThanMax_ReturnsFalse()
         {
-            SystemTime.SetCurrentTimeUtc = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
-            var virtualNow = SystemTime.UtcNow;
+            _getUtcNow = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
+            var virtualNow = _getUtcNow();
 
             var before = _bucket.ShouldThrottle(NLessThanMax);
             var tokensBefore = _bucket.CurrentTokenCount;
             before.Should().BeFalse();
             tokensBefore.Should().Be(MaxTokens - NLessThanMax);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
+            _getUtcNow = () => virtualNow.AddSeconds(RefillInterval);
 
             var after = _bucket.ShouldThrottle(NLessThanMax);
             var tokensAfter = _bucket.CurrentTokenCount;
@@ -88,8 +89,8 @@
         [Fact]
         public void ShouldThrottle_WhenCalledWithNGreaterThanMaxSleepNGreaterThanMax_ReturnsTrue()
         {
-            SystemTime.SetCurrentTimeUtc = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
-            var virtualNow = SystemTime.UtcNow;
+            _getUtcNow = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
+            var virtualNow = _getUtcNow();
 
             var before = _bucket.ShouldThrottle(NGreaterThanMax);
             var tokensBefore = _bucket.CurrentTokenCount;
@@ -97,7 +98,7 @@
             before.Should().BeTrue();
             tokensBefore.Should().Be(MaxTokens);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
+            _getUtcNow = () => virtualNow.AddSeconds(RefillInterval);
 
             var after = _bucket.ShouldThrottle(NGreaterThanMax);
             var tokensAfter = _bucket.CurrentTokenCount;
@@ -108,8 +109,8 @@
         [Fact]
         public void ShouldThrottle_WhenCalledWithNLessThanMaxSleepCumulativeNLessThanMax()
         {
-            SystemTime.SetCurrentTimeUtc = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
-            var virtualNow = SystemTime.UtcNow;
+            _getUtcNow = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
+            var virtualNow = _getUtcNow();
 
             long sum = 0;
             for (int i = 0; i < Cumulative; i++)
@@ -120,7 +121,7 @@
             var tokensBefore = _bucket.CurrentTokenCount;
             tokensBefore.Should().Be(MaxTokens - sum);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
+            _getUtcNow = () => virtualNow.AddSeconds(RefillInterval);
 
             for (int i = 0; i < Cumulative; i++)
             {
@@ -133,8 +134,8 @@
         [Fact]
         public void ShouldThrottle_WhenCalledWithCumulativeNLessThanMaxSleepCumulativeNGreaterThanMax()
         {
-            SystemTime.SetCurrentTimeUtc = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
-            var virtualNow = SystemTime.UtcNow;
+            _getUtcNow = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
+            var virtualNow = _getUtcNow();
 
             long sum = 0;
             for (int i = 0; i < Cumulative; i++)
@@ -145,7 +146,7 @@
             var tokensBefore = _bucket.CurrentTokenCount;
             tokensBefore.Should().Be(MaxTokens - sum);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
+            _getUtcNow = () => virtualNow.AddSeconds(RefillInterval);
 
             for (int i = 0; i < 3*Cumulative; i++)
             {
@@ -162,8 +163,8 @@
         [Fact]
         public void ShouldThrottle_WhenCalledWithCumulativeNGreaterThanMaxSleepCumulativeNLessThanMax()
         {
-            SystemTime.SetCurrentTimeUtc = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
-            var virtualNow = SystemTime.UtcNow;
+            _getUtcNow = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
+            var virtualNow = _getUtcNow();
 
             for (int i = 0; i < 3*Cumulative; i++)
                 _bucket.ShouldThrottle(NLessThanMax);
@@ -174,7 +175,7 @@
             before.Should().BeTrue();
             tokensBefore.Should().BeLessThan(NLessThanMax);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
+            _getUtcNow = () => virtualNow.AddSeconds(RefillInterval);
 
             long sum = 0;
             for (int i = 0; i < Cumulative; i++)
@@ -190,8 +191,8 @@
         [Fact]
         public void ShouldThrottle_WhenCalledWithCumulativeNGreaterThanMaxSleepCumulativeNGreaterThanMax()
         {
-            SystemTime.SetCurrentTimeUtc = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
-            var virtualNow = SystemTime.UtcNow;
+            _getUtcNow = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
+            var virtualNow = _getUtcNow();
 
             for (int i = 0; i < 3*Cumulative; i++)
                 _bucket.ShouldThrottle(NLessThanMax);
@@ -202,7 +203,7 @@
             before.Should().BeTrue();
             tokensBefore.Should().BeLessThan(NLessThanMax);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
+            _getUtcNow = () => virtualNow.AddSeconds(RefillInterval);
 
             for (int i = 0; i < 3*Cumulative; i++)
             {

@@ -14,6 +14,7 @@
         //provides a queue of timestamps expressed in ticks when reservations expire
         private readonly Queue<long> _expirationTimestampsQueue;
         private readonly int _occurrences;
+        private readonly GetUtcNow _getUtcNow;
         private readonly object _syncRoot = new object();
         private readonly long _timeUnitTicks;
         private long _nextCheckTime;
@@ -24,7 +25,8 @@
         /// </summary>
         /// <param name="occurrences">Maximum number of occurences per time unit allowed.</param>
         /// <param name="timeUnit">The time unit in which the occurences are constrained.</param>
-        public RollingWindowThrottler(int occurrences, TimeSpan timeUnit)
+        /// <param name="getUtcNow">For testing.</param>
+        public RollingWindowThrottler(int occurrences, TimeSpan timeUnit, GetUtcNow getUtcNow = null)
         {
             if (occurrences <= 0)
             {
@@ -33,6 +35,7 @@
 
             _occurrences = occurrences;
             _timeUnitTicks = timeUnit.Ticks;
+            _getUtcNow = getUtcNow ?? SystemClock.GetUtcNow;
             _remainingTokens = occurrences;
             _expirationTimestampsQueue = new Queue<long>(occurrences);
         }
@@ -95,7 +98,7 @@
             {
                 throw new ArgumentOutOfRangeException("tokens", "Should be positive integer greater than 0");
             }
-            var currentTime = SystemTime.UtcNow.Ticks;
+            var currentTime = _getUtcNow().Ticks;
 
             lock (_syncRoot)
             {
@@ -119,12 +122,12 @@
 
         private void CheckExitTimeQueue()
         {
-            if (_nextCheckTime > SystemTime.UtcNow.Ticks)
+            if (_nextCheckTime > _getUtcNow().Ticks)
             {
                 return;
             }
 
-            while (_expirationTimestampsQueue.Count > 0 && _expirationTimestampsQueue.Peek() <= SystemTime.UtcNow.Ticks)
+            while (_expirationTimestampsQueue.Count > 0 && _expirationTimestampsQueue.Peek() <= _getUtcNow().Ticks)
             {
                 _expirationTimestampsQueue.Dequeue();
                 _remainingTokens++;

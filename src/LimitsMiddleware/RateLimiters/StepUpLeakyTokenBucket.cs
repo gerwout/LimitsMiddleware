@@ -2,33 +2,35 @@
 {
     public class StepUpLeakyTokenBucket : LeakyTokenBucket
     {
-        private long lastActivityTime;
+        private readonly GetUtcNow _getUtcNow;
+        private long _lastActivityTime;
 
         public StepUpLeakyTokenBucket(long maxTokens, long refillInterval, int refillIntervalInMilliSeconds,
-            long stepTokens, long stepInterval, int stepIntervalInMilliseconds)
-            : base(
-                maxTokens, refillInterval, refillIntervalInMilliSeconds, stepTokens, stepInterval,
+            long stepTokens, long stepInterval, int stepIntervalInMilliseconds, GetUtcNow getUtcNow)
+            : base(maxTokens, refillInterval, refillIntervalInMilliSeconds, stepTokens, stepInterval,
                 stepIntervalInMilliseconds)
-        {}
+        {
+            _getUtcNow = getUtcNow ?? SystemClock.GetUtcNow;
+        }
 
         protected override void UpdateTokens()
         {
-            var currentTime = SystemTime.UtcNow.Ticks;
+            var currentTime = _getUtcNow().Ticks;
 
             if (currentTime >= NextRefillTime)
             {
                 Tokens = StepTokens;
 
-                lastActivityTime = currentTime;
-                NextRefillTime = currentTime + ticksRefillInterval;
+                _lastActivityTime = currentTime;
+                NextRefillTime = currentTime + TicksRefillInterval;
 
                 return;
             }
 
             //calculate tokens at current step
 
-            var elapsedTimeSinceLastActivity = currentTime - lastActivityTime;
-            var elapsedStepsSinceLastActivity = elapsedTimeSinceLastActivity/ticksStepInterval;
+            var elapsedTimeSinceLastActivity = currentTime - _lastActivityTime;
+            var elapsedStepsSinceLastActivity = elapsedTimeSinceLastActivity/TicksStepInterval;
 
             Tokens += (elapsedStepsSinceLastActivity*StepTokens);
 
@@ -36,7 +38,7 @@
             {
                 Tokens = BucketTokenCapacity;
             }
-            lastActivityTime = currentTime;
+            _lastActivityTime = currentTime;
         }
     }
 }

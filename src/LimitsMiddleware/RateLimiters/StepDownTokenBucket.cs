@@ -2,16 +2,19 @@
 {
     public class StepDownTokenBucket : LeakyTokenBucket
     {
+        private readonly GetUtcNow _getUtcNow;
+
         public StepDownTokenBucket(long maxTokens, long refillInterval, int refillIntervalInMilliSeconds,
-            long stepTokens, long stepInterval, int stepIntervalInMilliseconds)
-            : base(
-                maxTokens, refillInterval, refillIntervalInMilliSeconds, stepTokens, stepInterval,
+            long stepTokens, long stepInterval, int stepIntervalInMilliseconds, GetUtcNow getUtcNow = null)
+            : base(maxTokens, refillInterval, refillIntervalInMilliSeconds, stepTokens, stepInterval,
                 stepIntervalInMilliseconds)
-        {}
+        {
+            _getUtcNow = getUtcNow ?? SystemClock.GetUtcNow;
+        }
 
         protected override void UpdateTokens()
         {
-            var currentTime = SystemTime.UtcNow.Ticks;
+            var currentTime = _getUtcNow().Ticks;
 
             if (currentTime >= NextRefillTime)
             {
@@ -19,17 +22,17 @@
                 Tokens = BucketTokenCapacity;
 
                 //compute next refill time
-                NextRefillTime = currentTime + ticksRefillInterval;
+                NextRefillTime = currentTime + TicksRefillInterval;
                 return;
             }
 
             //calculate max tokens possible till the end
             var timeToNextRefill = NextRefillTime - currentTime;
-            var stepsToNextRefill = timeToNextRefill/ticksStepInterval;
+            var stepsToNextRefill = timeToNextRefill/TicksStepInterval;
 
             var maxPossibleTokens = stepsToNextRefill*StepTokens;
 
-            if ((timeToNextRefill%ticksStepInterval) > 0)
+            if ((timeToNextRefill%TicksStepInterval) > 0)
             {
                 maxPossibleTokens += StepTokens;
             }

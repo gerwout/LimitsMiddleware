@@ -68,12 +68,14 @@
     <Compile Include="GlobalRateLimiter.cs" />
     <Compile Include="RateLimiterBase.cs" />
     <Compile Include="RateLimiters\FixedTokenBucket.cs" />
+    <Compile Include="RateLimiters\GetUtcNow.cs" />
     <Compile Include="RateLimiters\IThrottleStrategy.cs" />
     <Compile Include="RateLimiters\LeakyTokenBucket.cs" />
     <Compile Include="RateLimiters\RollingWindowThrottler.cs" />
     <Compile Include="RateLimiters\StepDownTokenBucket.cs" />
     <Compile Include="RateLimiters\StepUpLeakyTokenBucket.cs" />
-    <Compile Include="RateLimiters\SystemTime.cs" />
+    <Compile Include="RateLimiters\SystemClock.cs" />
+    <Compile Include="RateLimiters\GetEnvironmentTickCount.cs" />
     <Compile Include="RateLimiters\Throttler.cs" />
     <Compile Include="RateLimiters\TokenBucket.cs" />
     <Compile Include="RequestContext.cs" />
