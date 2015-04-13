@@ -67,6 +67,15 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="GlobalRateLimiter.cs" />
     <Compile Include="RateLimiterBase.cs" />
+    <Compile Include="RateLimiters\FixedTokenBucket.cs" />
+    <Compile Include="RateLimiters\IThrottleStrategy.cs" />
+    <Compile Include="RateLimiters\LeakyTokenBucket.cs" />
+    <Compile Include="RateLimiters\RollingWindowThrottler.cs" />
+    <Compile Include="RateLimiters\StepDownTokenBucket.cs" />
+    <Compile Include="RateLimiters\StepUpLeakyTokenBucket.cs" />
+    <Compile Include="RateLimiters\SystemTime.cs" />
+    <Compile Include="RateLimiters\Throttler.cs" />
+    <Compile Include="RateLimiters\TokenBucket.cs" />
     <Compile Include="RequestContext.cs" />
     <Compile Include="StringExtension.cs" />
     <Compile Include="ThrottledStream.cs" />
