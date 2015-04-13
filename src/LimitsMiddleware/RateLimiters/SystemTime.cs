@@ -1,7 +1,7 @@
-﻿using System;
-
-namespace Bert.RateLimiters
+﻿namespace LimitsMiddleware.RateLimiters
 {
+    using System;
+
     public static class SystemTime
     {
         // Allow modification of "Today" for unit testing
@@ -11,18 +11,12 @@ namespace Bert.RateLimiters
 
         public static DateTime UtcNow
         {
-            get
-            {
-                return SetCurrentTimeUtc();
-            }
+            get { return SetCurrentTimeUtc(); }
         }
 
         public static DateTime Now
         {
-            get
-            {
-                return SetCurrentTime();
-            }
+            get { return SetCurrentTime(); }
         }
 
         public static int EnvironmentTickCount

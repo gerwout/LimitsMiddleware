@@ -1,20 +1,21 @@
-﻿using System;
-
-namespace Bert.RateLimiters
+﻿namespace LimitsMiddleware.RateLimiters
 {
+    using System;
+
     public abstract class TokenBucket : IThrottleStrategy
     {
-        protected long bucketTokenCapacity;
-        private readonly object syncRoot = new object();
-
-
+        private readonly object _syncRoot = new object();
+        protected readonly long BucketTokenCapacity;
         //number of tokens in the bucket
-        protected long tokens;
+        protected long Tokens;
 
         protected TokenBucket(long bucketTokenCapacity)
         {
-            if(bucketTokenCapacity <= 0) throw new ArgumentException("bucket token capacity can not be negative");
-            this.bucketTokenCapacity = bucketTokenCapacity;
+            if (bucketTokenCapacity <= 0)
+            {
+                throw new ArgumentException("bucket token capacity can not be negative");
+            }
+            BucketTokenCapacity = bucketTokenCapacity;
         }
 
         public bool ShouldThrottle(long n)
@@ -31,24 +32,25 @@ namespace Bert.RateLimiters
 
         public bool ShouldThrottle(long n, out int waitTime)
         {
-            if(n<=0) throw new ArgumentException("Should be positive integer", "n");
+            if (n <= 0)
+            {
+                throw new ArgumentException("Should be positive integer", "n");
+            }
 
-            lock (syncRoot)
+            lock (_syncRoot)
             {
                 UpdateTokens();
-                if (tokens < n)
+                if (Tokens < n)
                 {
                     waitTime = 0;
                     return true;
                 }
-                tokens -= n;
+                Tokens -= n;
 
                 waitTime = 0;
                 return false;
             }
         }
-
-        protected abstract void UpdateTokens();
 
         public bool ShouldThrottle(out int waitTime)
         {
@@ -59,12 +61,14 @@ namespace Bert.RateLimiters
         {
             get
             {
-                lock (syncRoot)
+                lock (_syncRoot)
                 {
                     UpdateTokens();
-                    return tokens;
+                    return Tokens;
                 }
             }
         }
+
+        protected abstract void UpdateTokens();
     }
 }

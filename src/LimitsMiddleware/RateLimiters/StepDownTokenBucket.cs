@@ -1,35 +1,42 @@
-﻿using System;
-
-namespace Bert.RateLimiters
+﻿namespace LimitsMiddleware.RateLimiters
 {
     public class StepDownTokenBucket : LeakyTokenBucket
     {
-        public StepDownTokenBucket(long maxTokens, long refillInterval, int refillIntervalInMilliSeconds, long stepTokens, long stepInterval, int stepIntervalInMilliseconds) : base(maxTokens, refillInterval, refillIntervalInMilliSeconds, stepTokens, stepInterval, stepIntervalInMilliseconds)
-        {
-        }
+        public StepDownTokenBucket(long maxTokens, long refillInterval, int refillIntervalInMilliSeconds,
+            long stepTokens, long stepInterval, int stepIntervalInMilliseconds)
+            : base(
+                maxTokens, refillInterval, refillIntervalInMilliSeconds, stepTokens, stepInterval,
+                stepIntervalInMilliseconds)
+        {}
 
         protected override void UpdateTokens()
         {
-             var currentTime = SystemTime.UtcNow.Ticks;
+            var currentTime = SystemTime.UtcNow.Ticks;
 
-            if (currentTime >= nextRefillTime)
+            if (currentTime >= NextRefillTime)
             {
                 //set tokens to max
-                tokens = bucketTokenCapacity;
+                Tokens = BucketTokenCapacity;
 
                 //compute next refill time
-                nextRefillTime = currentTime + ticksRefillInterval;
+                NextRefillTime = currentTime + ticksRefillInterval;
                 return;
             }
 
             //calculate max tokens possible till the end
-            var timeToNextRefill = nextRefillTime - currentTime;
+            var timeToNextRefill = NextRefillTime - currentTime;
             var stepsToNextRefill = timeToNextRefill/ticksStepInterval;
 
-            var maxPossibleTokens = stepsToNextRefill*stepTokens;
+            var maxPossibleTokens = stepsToNextRefill*StepTokens;
 
-            if ((timeToNextRefill%ticksStepInterval) > 0) maxPossibleTokens += stepTokens;
-            if (maxPossibleTokens < tokens) tokens = maxPossibleTokens;
+            if ((timeToNextRefill%ticksStepInterval) > 0)
+            {
+                maxPossibleTokens += StepTokens;
+            }
+            if (maxPossibleTokens < Tokens)
+            {
+                Tokens = maxPossibleTokens;
+            }
         }
     }
 }

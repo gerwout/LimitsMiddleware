@@ -1,37 +1,41 @@
-﻿using System;
-
-namespace Bert.RateLimiters
+﻿namespace LimitsMiddleware.RateLimiters
 {
     public class StepUpLeakyTokenBucket : LeakyTokenBucket
     {
         private long lastActivityTime;
 
-        public StepUpLeakyTokenBucket(long maxTokens, long refillInterval, int refillIntervalInMilliSeconds, long stepTokens, long stepInterval, int stepIntervalInMilliseconds) : base(maxTokens, refillInterval, refillIntervalInMilliSeconds, stepTokens, stepInterval, stepIntervalInMilliseconds)
-        {
-        }
+        public StepUpLeakyTokenBucket(long maxTokens, long refillInterval, int refillIntervalInMilliSeconds,
+            long stepTokens, long stepInterval, int stepIntervalInMilliseconds)
+            : base(
+                maxTokens, refillInterval, refillIntervalInMilliSeconds, stepTokens, stepInterval,
+                stepIntervalInMilliseconds)
+        {}
 
         protected override void UpdateTokens()
         {
             var currentTime = SystemTime.UtcNow.Ticks;
 
-            if (currentTime >= nextRefillTime)
+            if (currentTime >= NextRefillTime)
             {
-                tokens = stepTokens;
+                Tokens = StepTokens;
 
                 lastActivityTime = currentTime;
-                nextRefillTime = currentTime + ticksRefillInterval;
+                NextRefillTime = currentTime + ticksRefillInterval;
 
                 return;
             }
 
             //calculate tokens at current step
 
-            long elapsedTimeSinceLastActivity = currentTime - lastActivityTime;
-            long elapsedStepsSinceLastActivity = elapsedTimeSinceLastActivity / ticksStepInterval;
+            var elapsedTimeSinceLastActivity = currentTime - lastActivityTime;
+            var elapsedStepsSinceLastActivity = elapsedTimeSinceLastActivity/ticksStepInterval;
 
-            tokens += (elapsedStepsSinceLastActivity*stepTokens);
+            Tokens += (elapsedStepsSinceLastActivity*StepTokens);
 
-            if (tokens > bucketTokenCapacity) tokens = bucketTokenCapacity;
+            if (Tokens > BucketTokenCapacity)
+            {
+                Tokens = BucketTokenCapacity;
+            }
             lastActivityTime = currentTime;
         }
     }

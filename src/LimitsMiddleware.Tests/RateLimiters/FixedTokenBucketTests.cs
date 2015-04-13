@@ -1,69 +1,68 @@
-﻿using System;
-using System.Threading;
-
-namespace Bert.RateLimiters.Tests
+﻿namespace LimitsMiddleware.RateLimiters
 {
+    using System;
+    using System.Threading;
     using FluentAssertions;
     using Xunit;
 
     public class FixedTokenBucketTests
     {
-        private FixedTokenBucket bucket;
-        public const long MAX_TOKENS = 10;
-        public const long REFILL_INTERVAL = 10;
-        public const long N_LESS_THAN_MAX = 2;
-        public const long N_GREATER_THAN_MAX = 12;
-        private const int CUMULATIVE = 2;
+        private readonly FixedTokenBucket _bucket;
+        private const long MaxTokens = 10;
+        private const long RefillInterval = 10;
+        private const long NLessThanMax = 2;
+        private const long NGreaterThanMax = 12;
+        private const int Cumulative = 2;
 
         public FixedTokenBucketTests()
         {
-            bucket = new FixedTokenBucket(MAX_TOKENS, REFILL_INTERVAL, 1000);
+            _bucket = new FixedTokenBucket(MaxTokens, RefillInterval, 1000);
         }
 
         [Fact]
         public void ShouldThrottle_WhenCalledWithNTokensLessThanMax_ReturnsFalse()
         {
             int waitTime;
-            var shouldThrottle = bucket.ShouldThrottle(N_LESS_THAN_MAX, out waitTime);
+            var shouldThrottle = _bucket.ShouldThrottle(NLessThanMax, out waitTime);
 
             shouldThrottle.Should().BeFalse();
-            bucket.CurrentTokenCount.Should().Be(MAX_TOKENS - N_LESS_THAN_MAX);
+            _bucket.CurrentTokenCount.Should().Be(MaxTokens - NLessThanMax);
         }
 
         [Fact]
         public void ShouldThrottle_WhenCalledWithNTokensGreaterThanMax_ReturnsTrue()
         {
             int waitTime;
-            var shouldThrottle = bucket.ShouldThrottle(N_GREATER_THAN_MAX, out waitTime);
+            var shouldThrottle = _bucket.ShouldThrottle(NGreaterThanMax, out waitTime);
 
             shouldThrottle.Should().BeTrue();
-            bucket.CurrentTokenCount.Should().Be(MAX_TOKENS);
+            _bucket.CurrentTokenCount.Should().Be(MaxTokens);
         }
 
         [Fact]
         public void ShouldThrottle_WhenCalledCumulativeNTimesIsLessThanMaxTokens_ReturnsFalse()
         {
-            for (int i = 0; i < CUMULATIVE; i++)
+            for (int i = 0; i < Cumulative; i++)
             {
-                bucket.ShouldThrottle(N_LESS_THAN_MAX).Should().BeFalse();
+                _bucket.ShouldThrottle(NLessThanMax).Should().BeFalse();
             }
 
-            var tokens = bucket.CurrentTokenCount;
+            var tokens = _bucket.CurrentTokenCount;
 
-            tokens.Should().Be(MAX_TOKENS - (CUMULATIVE*N_LESS_THAN_MAX));
+            tokens.Should().Be(MaxTokens - (Cumulative*NLessThanMax));
         }
 
         [Fact]
         public void ShouldThrottle_WhenCalledCumulativeNTimesIsGreaterThanMaxTokens_ReturnsTrue()
         {
-            for (int i = 0; i < CUMULATIVE; i++)
+            for (int i = 0; i < Cumulative; i++)
             {
-                bucket.ShouldThrottle(N_GREATER_THAN_MAX).Should().BeTrue();
+                _bucket.ShouldThrottle(NGreaterThanMax).Should().BeTrue();
             }
 
-            var tokens = bucket.CurrentTokenCount;
+            var tokens = _bucket.CurrentTokenCount;
 
-            tokens.Should().Be(MAX_TOKENS);
+            tokens.Should().Be(MaxTokens);
         }
 
         [Fact]
@@ -72,18 +71,18 @@ namespace Bert.RateLimiters.Tests
             SystemTime.SetCurrentTimeUtc = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
             var virtualNow = SystemTime.UtcNow;
 
-            var before = bucket.ShouldThrottle(N_LESS_THAN_MAX);
-            var tokensBefore = bucket.CurrentTokenCount;
+            var before = _bucket.ShouldThrottle(NLessThanMax);
+            var tokensBefore = _bucket.CurrentTokenCount;
             before.Should().BeFalse();
-            tokensBefore.Should().Be(MAX_TOKENS - N_LESS_THAN_MAX);
+            tokensBefore.Should().Be(MaxTokens - NLessThanMax);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(REFILL_INTERVAL);
+            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
 
-            var after = bucket.ShouldThrottle(N_LESS_THAN_MAX);
-            var tokensAfter = bucket.CurrentTokenCount;
+            var after = _bucket.ShouldThrottle(NLessThanMax);
+            var tokensAfter = _bucket.CurrentTokenCount;
 
             after.Should().BeFalse();
-            tokensAfter.Should().Be(MAX_TOKENS - N_LESS_THAN_MAX);
+            tokensAfter.Should().Be(MaxTokens - NLessThanMax);
         }
 
         [Fact]
@@ -92,18 +91,18 @@ namespace Bert.RateLimiters.Tests
             SystemTime.SetCurrentTimeUtc = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
             var virtualNow = SystemTime.UtcNow;
 
-            var before = bucket.ShouldThrottle(N_GREATER_THAN_MAX);
-            var tokensBefore = bucket.CurrentTokenCount;
+            var before = _bucket.ShouldThrottle(NGreaterThanMax);
+            var tokensBefore = _bucket.CurrentTokenCount;
 
             before.Should().BeTrue();
-            tokensBefore.Should().Be(MAX_TOKENS);
+            tokensBefore.Should().Be(MaxTokens);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(REFILL_INTERVAL);
+            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
 
-            var after = bucket.ShouldThrottle(N_GREATER_THAN_MAX);
-            var tokensAfter = bucket.CurrentTokenCount;
+            var after = _bucket.ShouldThrottle(NGreaterThanMax);
+            var tokensAfter = _bucket.CurrentTokenCount;
             after.Should().BeTrue();
-            tokensAfter.Should().Be(MAX_TOKENS);
+            tokensAfter.Should().Be(MaxTokens);
         }
 
         [Fact]
@@ -113,22 +112,22 @@ namespace Bert.RateLimiters.Tests
             var virtualNow = SystemTime.UtcNow;
 
             long sum = 0;
-            for (int i = 0; i < CUMULATIVE; i++)
+            for (int i = 0; i < Cumulative; i++)
             {
-                bucket.ShouldThrottle(N_LESS_THAN_MAX).Should().BeFalse();
-                sum += N_LESS_THAN_MAX;
+                _bucket.ShouldThrottle(NLessThanMax).Should().BeFalse();
+                sum += NLessThanMax;
             }
-            var tokensBefore = bucket.CurrentTokenCount;
-            tokensBefore.Should().Be(MAX_TOKENS - sum);
+            var tokensBefore = _bucket.CurrentTokenCount;
+            tokensBefore.Should().Be(MaxTokens - sum);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(REFILL_INTERVAL);
+            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
 
-            for (int i = 0; i < CUMULATIVE; i++)
+            for (int i = 0; i < Cumulative; i++)
             {
-                bucket.ShouldThrottle(N_LESS_THAN_MAX).Should().BeFalse();
+                _bucket.ShouldThrottle(NLessThanMax).Should().BeFalse();
             }
-            var tokensAfter = bucket.CurrentTokenCount;
-            tokensAfter.Should().Be(MAX_TOKENS - sum);
+            var tokensAfter = _bucket.CurrentTokenCount;
+            tokensAfter.Should().Be(MaxTokens - sum);
         }
 
         [Fact]
@@ -138,26 +137,26 @@ namespace Bert.RateLimiters.Tests
             var virtualNow = SystemTime.UtcNow;
 
             long sum = 0;
-            for (int i = 0; i < CUMULATIVE; i++)
+            for (int i = 0; i < Cumulative; i++)
             {
-                bucket.ShouldThrottle(N_LESS_THAN_MAX).Should().BeFalse();
-                sum += N_LESS_THAN_MAX;
+                _bucket.ShouldThrottle(NLessThanMax).Should().BeFalse();
+                sum += NLessThanMax;
             }
-            var tokensBefore = bucket.CurrentTokenCount;
-            tokensBefore.Should().Be(MAX_TOKENS - sum);
+            var tokensBefore = _bucket.CurrentTokenCount;
+            tokensBefore.Should().Be(MaxTokens - sum);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(REFILL_INTERVAL);
+            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
 
-            for (int i = 0; i < 3*CUMULATIVE; i++)
+            for (int i = 0; i < 3*Cumulative; i++)
             {
-                bucket.ShouldThrottle(N_LESS_THAN_MAX);
+                _bucket.ShouldThrottle(NLessThanMax);
             }
 
-            var after = bucket.ShouldThrottle(N_LESS_THAN_MAX);
-            var tokensAfter = bucket.CurrentTokenCount;
+            var after = _bucket.ShouldThrottle(NLessThanMax);
+            var tokensAfter = _bucket.CurrentTokenCount;
 
             after.Should().BeTrue();
-            tokensAfter.Should().BeLessThan(N_LESS_THAN_MAX);
+            tokensAfter.Should().BeLessThan(NLessThanMax);
         }
 
         [Fact]
@@ -166,26 +165,26 @@ namespace Bert.RateLimiters.Tests
             SystemTime.SetCurrentTimeUtc = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
             var virtualNow = SystemTime.UtcNow;
 
-            for (int i = 0; i < 3*CUMULATIVE; i++)
-                bucket.ShouldThrottle(N_LESS_THAN_MAX);
+            for (int i = 0; i < 3*Cumulative; i++)
+                _bucket.ShouldThrottle(NLessThanMax);
 
-            var before = bucket.ShouldThrottle(N_LESS_THAN_MAX);
-            var tokensBefore = bucket.CurrentTokenCount;
+            var before = _bucket.ShouldThrottle(NLessThanMax);
+            var tokensBefore = _bucket.CurrentTokenCount;
 
             before.Should().BeTrue();
-            tokensBefore.Should().BeLessThan(N_LESS_THAN_MAX);
+            tokensBefore.Should().BeLessThan(NLessThanMax);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(REFILL_INTERVAL);
+            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
 
             long sum = 0;
-            for (int i = 0; i < CUMULATIVE; i++)
+            for (int i = 0; i < Cumulative; i++)
             {
-                bucket.ShouldThrottle(N_LESS_THAN_MAX).Should().BeFalse();
-                sum += N_LESS_THAN_MAX;
+                _bucket.ShouldThrottle(NLessThanMax).Should().BeFalse();
+                sum += NLessThanMax;
             }
 
-            var tokensAfter = bucket.CurrentTokenCount;
-            tokensAfter.Should().Be(MAX_TOKENS - sum);
+            var tokensAfter = _bucket.CurrentTokenCount;
+            tokensAfter.Should().Be(MaxTokens - sum);
         }
 
         [Fact]
@@ -194,26 +193,26 @@ namespace Bert.RateLimiters.Tests
             SystemTime.SetCurrentTimeUtc = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
             var virtualNow = SystemTime.UtcNow;
 
-            for (int i = 0; i < 3*CUMULATIVE; i++)
-                bucket.ShouldThrottle(N_LESS_THAN_MAX);
+            for (int i = 0; i < 3*Cumulative; i++)
+                _bucket.ShouldThrottle(NLessThanMax);
 
-            var before = bucket.ShouldThrottle(N_LESS_THAN_MAX);
-            var tokensBefore = bucket.CurrentTokenCount;
+            var before = _bucket.ShouldThrottle(NLessThanMax);
+            var tokensBefore = _bucket.CurrentTokenCount;
 
             before.Should().BeTrue();
-            tokensBefore.Should().BeLessThan(N_LESS_THAN_MAX);
+            tokensBefore.Should().BeLessThan(NLessThanMax);
 
-            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(REFILL_INTERVAL);
+            SystemTime.SetCurrentTimeUtc = () => virtualNow.AddSeconds(RefillInterval);
 
-            for (int i = 0; i < 3*CUMULATIVE; i++)
+            for (int i = 0; i < 3*Cumulative; i++)
             {
-                bucket.ShouldThrottle(N_LESS_THAN_MAX);
+                _bucket.ShouldThrottle(NLessThanMax);
             }
-            var after = bucket.ShouldThrottle(N_LESS_THAN_MAX);
-            var tokensAfter = bucket.CurrentTokenCount;
+            var after = _bucket.ShouldThrottle(NLessThanMax);
+            var tokensAfter = _bucket.CurrentTokenCount;
 
             after.Should().BeTrue();
-            tokensAfter.Should().BeLessThan(N_LESS_THAN_MAX);
+            tokensAfter.Should().BeLessThan(NLessThanMax);
         }
 
         [Fact]
@@ -221,13 +220,13 @@ namespace Bert.RateLimiters.Tests
         {
             var t1 = new Thread(p =>
             {
-                var throttle = bucket.ShouldThrottle(N_LESS_THAN_MAX);
+                var throttle = _bucket.ShouldThrottle(NLessThanMax);
                 throttle.Should().BeFalse();
             });            
             
             var t2 = new Thread(p =>
             {
-                var throttle = bucket.ShouldThrottle(N_LESS_THAN_MAX);
+                var throttle = _bucket.ShouldThrottle(NLessThanMax);
                 throttle.Should().BeFalse();
             });
 
@@ -237,24 +236,24 @@ namespace Bert.RateLimiters.Tests
             t1.Join();
             t2.Join();
 
-            bucket.CurrentTokenCount.Should().Be(MAX_TOKENS - 2*N_LESS_THAN_MAX);
+            _bucket.CurrentTokenCount.Should().Be(MaxTokens - 2*NLessThanMax);
         }
         
         [Fact]
         public void ShouldThrottle_Thread1NGreaterThanMaxAndThread2NGreaterThanMax()
         {
-            var shouldThrottle = bucket.ShouldThrottle(N_GREATER_THAN_MAX);
+            var shouldThrottle = _bucket.ShouldThrottle(NGreaterThanMax);
             shouldThrottle.Should().BeTrue();
 
             var t1 = new Thread(p =>
             {
-                var throttle = bucket.ShouldThrottle(N_GREATER_THAN_MAX);
+                var throttle = _bucket.ShouldThrottle(NGreaterThanMax);
                 throttle.Should().BeTrue();
             });            
             
             var t2 = new Thread(p =>
             {
-                var throttle = bucket.ShouldThrottle(N_GREATER_THAN_MAX);
+                var throttle = _bucket.ShouldThrottle(NGreaterThanMax);
                 throttle.Should().BeTrue();
             });
 
@@ -264,7 +263,7 @@ namespace Bert.RateLimiters.Tests
             t1.Join();
             t2.Join();
 
-            bucket.CurrentTokenCount.Should().Be(MAX_TOKENS);
+            _bucket.CurrentTokenCount.Should().Be(MaxTokens);
         }
     }
 }

@@ -1,13 +1,12 @@
-﻿using System;
-
-namespace Bert.RateLimiters.Tests
+﻿namespace LimitsMiddleware.RateLimiters
 {
+    using System;
     using FluentAssertions;
     using Xunit;
 
     public class RollingWindowThrottlerTests
     {
-        private readonly DateTime referenceTime = new DateTime(2014, 9, 20, 0, 0, 0, DateTimeKind.Utc);
+        private readonly DateTime _referenceTime = new DateTime(2014, 9, 20, 0, 0, 0, DateTimeKind.Utc);
 
         [Fact]
         public void Throws_WhenNumberOfOccurencesIsLesserThanOne()
@@ -42,7 +41,7 @@ namespace Bert.RateLimiters.Tests
         public void ShouldThrottle_WhenCalledTwiceinSameSecondAndAllows1PerSecond_WillReturnTrue()
         {
 
-            SystemTime.SetCurrentTimeUtc = () => referenceTime;
+            SystemTime.SetCurrentTimeUtc = () => _referenceTime;
             var virtualNow = SystemTime.UtcNow;
 
             var throttler = new RollingWindowThrottler(1, TimeSpan.FromSeconds(1));
@@ -66,7 +65,7 @@ namespace Bert.RateLimiters.Tests
         public void ShouldThrottle_WhenCalledAfterSecondPassAndAllows1PerSecond_WillReturnFalse()
         {
 
-            SystemTime.SetCurrentTimeUtc = () => referenceTime;
+            SystemTime.SetCurrentTimeUtc = () => _referenceTime;
             var virtualNow = SystemTime.UtcNow;
 
             var throttler = new RollingWindowThrottler(1, TimeSpan.FromSeconds(1));
@@ -83,7 +82,7 @@ namespace Bert.RateLimiters.Tests
         public void ShouldThrottle_WhenCalledTwiceinSameSecondAndAllows2PerSecond_WillReturnFalse()
         {
 
-            SystemTime.SetCurrentTimeUtc = () => referenceTime;
+            SystemTime.SetCurrentTimeUtc = () => _referenceTime;
             var virtualNow = SystemTime.UtcNow;
 
             var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1));
@@ -100,7 +99,7 @@ namespace Bert.RateLimiters.Tests
         public void ShouldThrottle_WhenCalledAfterSecondPassesAndAllows2PerSecond_WillReturnFalse()
         {
 
-            SystemTime.SetCurrentTimeUtc = () => referenceTime;
+            SystemTime.SetCurrentTimeUtc = () => _referenceTime;
             var virtualNow = SystemTime.UtcNow;
 
             var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1));
@@ -118,7 +117,7 @@ namespace Bert.RateLimiters.Tests
         public void ShouldThrottle_WhenCalledThreeTimesinSameSecondAndAllows2PerSecond_WillReturnTrue()
         {
 
-            SystemTime.SetCurrentTimeUtc = () => referenceTime;
+            SystemTime.SetCurrentTimeUtc = () => _referenceTime;
             var virtualNow = SystemTime.UtcNow;
 
             var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1));
@@ -142,7 +141,7 @@ namespace Bert.RateLimiters.Tests
         public void ShouldThrottle_WhenCalledAtEndOfRollingWindowAndAllows2PerSecond_WillReturnFalse()
         {
 
-            SystemTime.SetCurrentTimeUtc = () => referenceTime;
+            SystemTime.SetCurrentTimeUtc = () => _referenceTime;
             var virtualNow = SystemTime.UtcNow;
 
             var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1));
@@ -193,7 +192,7 @@ namespace Bert.RateLimiters.Tests
         [Fact]
         public void ShouldThrottle_WhenCalledAndConsumingAllTokensAtOnceAndThenCalledOnceMore_WillReturnTrue()
         {
-            SystemTime.SetCurrentTimeUtc = () => referenceTime;
+            SystemTime.SetCurrentTimeUtc = () => _referenceTime;
             var virtualNow = SystemTime.UtcNow;
 
             var throttler = new RollingWindowThrottler(3, TimeSpan.FromSeconds(1));
@@ -211,7 +210,7 @@ namespace Bert.RateLimiters.Tests
         [Fact]
         public void ShouldThrottle_WhenCalledAndConsumingAllTokensAtOnceAndThenCalledOnceMoreAfterRollingWindowEnd_WillReturnFalse()
         {
-            SystemTime.SetCurrentTimeUtc = () => referenceTime;
+            SystemTime.SetCurrentTimeUtc = () => _referenceTime;
             var virtualNow = SystemTime.UtcNow;
 
             var throttler = new RollingWindowThrottler(3, TimeSpan.FromSeconds(1));

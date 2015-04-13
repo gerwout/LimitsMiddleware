@@ -1,28 +1,39 @@
-﻿using System;
-
-namespace Bert.RateLimiters
+﻿namespace LimitsMiddleware.RateLimiters
 {
+    using System;
+
     public class FixedTokenBucket : TokenBucket
     {
-        private readonly long ticksRefillInterval;
-        private long nextRefillTime;
+        private readonly long _ticksRefillInterval;
+        private long _nextRefillTime;
 
-        public FixedTokenBucket(long maxTokens, long refillInterval, long refillIntervalInMilliSeconds) : base(maxTokens)
+        public FixedTokenBucket(long maxTokens, long refillInterval, long refillIntervalInMilliSeconds)
+            : base(maxTokens)
         {
-            if (refillInterval < 0) throw new ArgumentOutOfRangeException("refillInterval", "Refill interval cannot be negative");
-            if (refillIntervalInMilliSeconds <= 0) throw new ArgumentOutOfRangeException("refillIntervalInMilliSeconds", "Refill interval in milliseconds cannot be negative");
+            if (refillInterval < 0)
+            {
+                throw new ArgumentOutOfRangeException("refillInterval", "Refill interval cannot be negative");
+            }
+            if (refillIntervalInMilliSeconds <= 0)
+            {
+                throw new ArgumentOutOfRangeException("refillIntervalInMilliSeconds",
+                    "Refill interval in milliseconds cannot be negative");
+            }
 
-            ticksRefillInterval = TimeSpan.FromMilliseconds(refillInterval * refillIntervalInMilliSeconds).Ticks;
+            _ticksRefillInterval = TimeSpan.FromMilliseconds(refillInterval*refillIntervalInMilliSeconds).Ticks;
         }
 
         protected override void UpdateTokens()
         {
             var currentTime = SystemTime.UtcNow.Ticks;
 
-            if (currentTime < nextRefillTime) return;
+            if (currentTime < _nextRefillTime)
+            {
+                return;
+            }
 
-            tokens = bucketTokenCapacity;
-            nextRefillTime = currentTime + ticksRefillInterval;
+            Tokens = BucketTokenCapacity;
+            _nextRefillTime = currentTime + _ticksRefillInterval;
         }
     }
 }

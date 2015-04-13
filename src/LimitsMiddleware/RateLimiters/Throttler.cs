@@ -1,24 +1,23 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Bert.RateLimiters
+﻿namespace LimitsMiddleware.RateLimiters
 {
+    using System;
+
     public class Throttler
     {
-        private readonly IThrottleStrategy strategy;
+        private readonly IThrottleStrategy _strategy;
 
         public Throttler(IThrottleStrategy strategy)
         {
-            if (strategy == null) throw new ArgumentNullException("strategy");
-            this.strategy = strategy;
+            if (strategy == null)
+            {
+                throw new ArgumentNullException("strategy");
+            }
+            _strategy = strategy;
         }
 
         public bool CanConsume()
         {
-            return !strategy.ShouldThrottle();
+            return !_strategy.ShouldThrottle();
         }
     }
 }
