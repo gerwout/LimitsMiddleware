@@ -45,7 +45,7 @@
             _getUtcNow = () => _referenceTime;
             var virtualNow = _getUtcNow();
 
-            var throttler = new RollingWindowThrottler(1, TimeSpan.FromSeconds(1), _getUtcNow);
+            var throttler = new RollingWindowThrottler(1, TimeSpan.FromSeconds(1), () => _getUtcNow());
             long waitTimeMillis;
             var shouldThrottle = throttler.ShouldThrottle(1, out waitTimeMillis);
             shouldThrottle.Should().BeFalse();
@@ -69,7 +69,7 @@
             _getUtcNow = () => _referenceTime;
             var virtualNow = _getUtcNow();
 
-            var throttler = new RollingWindowThrottler(1, TimeSpan.FromSeconds(1));
+            var throttler = new RollingWindowThrottler(1, TimeSpan.FromSeconds(1), () => _getUtcNow());
             long waitTimeMillis;
             var shouldThrottle = throttler.ShouldThrottle(1, out waitTimeMillis);
             shouldThrottle.Should().BeFalse();
@@ -86,7 +86,7 @@
             _getUtcNow = () => _referenceTime;
             var virtualNow = _getUtcNow();
 
-            var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1));
+            var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1), () => _getUtcNow());
             long waitTimeMillis;
             var shouldThrottle = throttler.ShouldThrottle(1, out waitTimeMillis);
             shouldThrottle.Should().BeFalse();
@@ -103,7 +103,7 @@
             _getUtcNow = () => _referenceTime;
             var virtualNow = _getUtcNow();
 
-            var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1));
+            var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1), () => _getUtcNow());
             long waitTimeMillis;
             var shouldThrottle = throttler.ShouldThrottle(1, out waitTimeMillis);
             shouldThrottle.Should().BeFalse();
@@ -121,7 +121,7 @@
             _getUtcNow = () => _referenceTime;
             var virtualNow = _getUtcNow();
 
-            var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1));
+            var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1), () => _getUtcNow());
             long waitTimeMillis;
             var shouldThrottle = throttler.ShouldThrottle(1, out waitTimeMillis);
             shouldThrottle.Should().BeFalse();
@@ -145,7 +145,7 @@
             _getUtcNow = () => _referenceTime;
             var virtualNow = _getUtcNow();
 
-            var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1));
+            var throttler = new RollingWindowThrottler(2, TimeSpan.FromSeconds(1), () => _getUtcNow());
             long waitTimeMillis;
             var shouldThrottle = throttler.ShouldThrottle(1, out waitTimeMillis);
             shouldThrottle.Should().BeFalse();
@@ -196,7 +196,7 @@
             _getUtcNow = () => _referenceTime;
             var virtualNow = _getUtcNow();
 
-            var throttler = new RollingWindowThrottler(3, TimeSpan.FromSeconds(1));
+            var throttler = new RollingWindowThrottler(3, TimeSpan.FromSeconds(1), () => _getUtcNow());
             long waitTimeMillis;
             var shouldThrottle = throttler.ShouldThrottle(3, out waitTimeMillis);
             shouldThrottle.Should().BeFalse();
@@ -214,7 +214,7 @@
             _getUtcNow = () => _referenceTime;
             var virtualNow = _getUtcNow();
 
-            var throttler = new RollingWindowThrottler(3, TimeSpan.FromSeconds(1));
+            var throttler = new RollingWindowThrottler(3, TimeSpan.FromSeconds(1), () => _getUtcNow());
             long waitTimeMillis;
             var shouldThrottle = throttler.ShouldThrottle(3, out waitTimeMillis);
             shouldThrottle.Should().BeFalse();

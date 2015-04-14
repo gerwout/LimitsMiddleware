@@ -17,7 +17,7 @@
 
         public FixedTokenBucketTests()
         {
-            _bucket = new FixedTokenBucket(MaxTokens, RefillInterval, 1000, _getUtcNow);
+            _bucket = new FixedTokenBucket(MaxTokens, RefillInterval, 1000, () => _getUtcNow());
         }
 
         [Fact]
