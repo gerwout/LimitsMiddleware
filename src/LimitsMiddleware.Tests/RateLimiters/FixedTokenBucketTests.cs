@@ -166,8 +166,10 @@
             _getUtcNow = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
             var virtualNow = _getUtcNow();
 
-            for (int i = 0; i < 3*Cumulative; i++)
+            for (var i = 0; i < 3*Cumulative; i++)
+            {
                 _bucket.ShouldThrottle(NLessThanMax);
+            }
 
             var before = _bucket.ShouldThrottle(NLessThanMax);
             var tokensBefore = _bucket.CurrentTokenCount;
