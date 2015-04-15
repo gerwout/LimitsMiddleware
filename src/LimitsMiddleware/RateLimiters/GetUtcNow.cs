@@ -2,5 +2,5 @@
 {
     using System;
 
-    public delegate DateTimeOffset GetUtcNow();
+    internal delegate DateTimeOffset GetUtcNow();
 }

@@ -69,15 +69,7 @@
     <Compile Include="RateLimiterBase.cs" />
     <Compile Include="RateLimiters\FixedTokenBucket.cs" />
     <Compile Include="RateLimiters\GetUtcNow.cs" />
-    <Compile Include="RateLimiters\IThrottleStrategy.cs" />
-    <Compile Include="RateLimiters\LeakyTokenBucket.cs" />
-    <Compile Include="RateLimiters\RollingWindowThrottler.cs" />
-    <Compile Include="RateLimiters\StepDownTokenBucket.cs" />
-    <Compile Include="RateLimiters\StepUpLeakyTokenBucket.cs" />
     <Compile Include="RateLimiters\SystemClock.cs" />
-    <Compile Include="RateLimiters\GetEnvironmentTickCount.cs" />
-    <Compile Include="RateLimiters\Throttler.cs" />
-    <Compile Include="RateLimiters\TokenBucket.cs" />
     <Compile Include="RequestContext.cs" />
     <Compile Include="StringExtension.cs" />
     <Compile Include="ThrottledStream.cs" />
@@ -86,6 +78,9 @@
   <ItemGroup>
     <None Include="LimitsMiddleware.nuspec" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="RateLimiters2\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

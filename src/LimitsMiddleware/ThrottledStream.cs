@@ -1,8 +1,11 @@
 ﻿namespace LimitsMiddleware
 {
+    using System;
+    using System.Collections.Generic;
     using System.IO;
     using System.Threading;
     using System.Threading.Tasks;
+    using LimitsMiddleware.RateLimiters;
 
     /* From http://www.codeproject.com/Articles/18243/Bandwidth-throttling
      * Release under CPOL licence http://www.codeproject.com/info/cpol10.aspx
@@ -11,15 +14,20 @@
     internal class ThrottledStream : Stream
     {
         private readonly Stream _innerStream;
-        private readonly RateLimiterBase _rateLimiter;
+        private readonly int _rateKiloBytesPerSecond;
+        private readonly FixedTokenBucket _throttler;
 
-        public ThrottledStream(Stream innerStream, RateLimiterBase rateLimiter)
+        public ThrottledStream(Stream innerStream, int rateKiloBytesPerSecond = 0)
         {
             innerStream.MustNotNull("innerStream");
-            rateLimiter.MustNotNull("rateLimiter");
 
             _innerStream = innerStream;
-            _rateLimiter = rateLimiter;
+            _rateKiloBytesPerSecond = rateKiloBytesPerSecond;
+            if (rateKiloBytesPerSecond > 0)
+            {
+                //_throttler = new RollingWindowThrottler(rateKiloBytesPerSecond, TimeSpan.FromSeconds(1)); // TODO use null throttler
+                _throttler = new FixedTokenBucket(rateKiloBytesPerSecond, TimeSpan.FromSeconds(1));
+            }
         }
 
         public override bool CanRead
@@ -60,8 +68,6 @@
 
         public override int Read(byte[] buffer, int offset, int count)
         {
-            _rateLimiter.Throttle(count).Wait();
-
             return _innerStream.Read(buffer, offset, count);
         }
 
@@ -72,14 +78,25 @@
 
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _rateLimiter.Throttle(count);
+            if (_throttler != null)
+            {
+                TimeSpan wait;
+                if (_throttler.ShouldThrottle(count / 1024, out wait))
+                {
+
+                    Console.WriteLine(wait);
+                    if (wait > TimeSpan.Zero)
+                    {
+                        await Task.Delay(wait, cancellationToken);
+                    }
+                }
+            }
             await _innerStream.WriteAsync(buffer, offset, count, cancellationToken);
         }
 
-        public override async Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await _rateLimiter.Throttle(count);
-            return await _innerStream.ReadAsync(buffer, offset, count, cancellationToken);
+            return _innerStream.ReadAsync(buffer, offset, count, cancellationToken);
         }
 
         public override void SetLength(long value)
@@ -89,8 +106,42 @@
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            _rateLimiter.Throttle(count).Wait();
-            _innerStream.Write(buffer, offset, count);
+
+            if (_throttler != null)
+            {
+                var x = count;
+                var rateBytesPerSecond = _rateKiloBytesPerSecond*1024;
+                TimeSpan wait;
+                while (x > rateBytesPerSecond)
+                {
+                    if (_throttler.ShouldThrottle(x / 1024, out wait))
+                    {
+                        Console.WriteLine(wait);
+                        if (wait > TimeSpan.Zero)
+                        {
+                            Task.Delay(wait).Wait();
+                        }
+                    }
+                    _innerStream.Write(buffer, offset, rateBytesPerSecond);
+                    offset += rateBytesPerSecond;
+                    x -= rateBytesPerSecond;
+                }
+                Console.WriteLine("Here {0}", _throttler.CurrentTokenCount);
+
+                while (_throttler.ShouldThrottle(x/1024, out wait))
+                {
+                    Console.WriteLine("{0} {1} {2}", x/1024, wait, _throttler.CurrentTokenCount);
+                    if (wait > TimeSpan.Zero)
+                    {
+                        Task.Delay(wait).Wait();
+                    }
+                }
+                _innerStream.Write(buffer, offset, x);
+            }
+            else
+            {
+                _innerStream.Write(buffer, offset, count);
+            }
         }
 
         public override string ToString()

@@ -63,10 +63,10 @@
                     logger.Debug("Configure streams to be limited.");
                     context.Request.Body = new ThrottledStream(
                         requestBodyStream, 
-                        new PerRequestRateLimiter(getMaxBytesToWrite(limitsRequestContext)));
+                        getMaxBytesToWrite(limitsRequestContext));
                     context.Response.Body = new ThrottledStream(
                         responseBodyStream,
-                        new PerRequestRateLimiter(getMaxBytesToWrite(limitsRequestContext)));
+                        getMaxBytesToWrite(limitsRequestContext));
 
                     //TODO consider SendFile interception
                     logger.Debug("With configured limit forwarded.");

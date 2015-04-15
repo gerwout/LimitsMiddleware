@@ -1,6 +1,4 @@
-﻿// https://github.com/robertmircea/RateLimiters
-
-namespace LimitsMiddleware.RateLimiters
+﻿namespace LimitsMiddleware.RateLimiters
 {
     using System;
     using System.Threading;
@@ -9,23 +7,23 @@ namespace LimitsMiddleware.RateLimiters
 
     public class FixedTokenBucketTests
     {
-        private readonly FixedTokenBucket _bucket;
         private const long MaxTokens = 10;
         private const long RefillInterval = 10;
         private const long NLessThanMax = 2;
         private const long NGreaterThanMax = 12;
-        private const int Cumulative = 2;
+        private const long Cumulative = 2;
+        private readonly FixedTokenBucket _bucket;
         private GetUtcNow _getUtcNow = () => SystemClock.GetUtcNow();
 
         public FixedTokenBucketTests()
         {
-            _bucket = new FixedTokenBucket(MaxTokens, RefillInterval, 1000, () => _getUtcNow());
+            _bucket = new FixedTokenBucket(MaxTokens, TimeSpan.FromSeconds(1), () => _getUtcNow());
         }
 
         [Fact]
         public void ShouldThrottle_WhenCalledWithNTokensLessThanMax_ReturnsFalse()
         {
-            int waitTime;
+            TimeSpan waitTime;
             var shouldThrottle = _bucket.ShouldThrottle(NLessThanMax, out waitTime);
 
             shouldThrottle.Should().BeFalse();
@@ -35,17 +33,18 @@ namespace LimitsMiddleware.RateLimiters
         [Fact]
         public void ShouldThrottle_WhenCalledWithNTokensGreaterThanMax_ReturnsTrue()
         {
-            int waitTime;
+            TimeSpan waitTime;
             var shouldThrottle = _bucket.ShouldThrottle(NGreaterThanMax, out waitTime);
 
             shouldThrottle.Should().BeTrue();
             _bucket.CurrentTokenCount.Should().Be(MaxTokens);
+            waitTime.Should().BeGreaterThan(TimeSpan.Zero);
         }
 
         [Fact]
         public void ShouldThrottle_WhenCalledCumulativeNTimesIsLessThanMaxTokens_ReturnsFalse()
         {
-            for (int i = 0; i < Cumulative; i++)
+            for (var i = 0; i < Cumulative; i++)
             {
                 _bucket.ShouldThrottle(NLessThanMax).Should().BeFalse();
             }
@@ -58,7 +57,7 @@ namespace LimitsMiddleware.RateLimiters
         [Fact]
         public void ShouldThrottle_WhenCalledCumulativeNTimesIsGreaterThanMaxTokens_ReturnsTrue()
         {
-            for (int i = 0; i < Cumulative; i++)
+            for (var i = 0; i < Cumulative; i++)
             {
                 _bucket.ShouldThrottle(NGreaterThanMax).Should().BeTrue();
             }
@@ -115,7 +114,7 @@ namespace LimitsMiddleware.RateLimiters
             var virtualNow = _getUtcNow();
 
             long sum = 0;
-            for (int i = 0; i < Cumulative; i++)
+            for (var i = 0; i < Cumulative; i++)
             {
                 _bucket.ShouldThrottle(NLessThanMax).Should().BeFalse();
                 sum += NLessThanMax;
@@ -125,7 +124,7 @@ namespace LimitsMiddleware.RateLimiters
 
             _getUtcNow = () => virtualNow.AddSeconds(RefillInterval);
 
-            for (int i = 0; i < Cumulative; i++)
+            for (var i = 0; i < Cumulative; i++)
             {
                 _bucket.ShouldThrottle(NLessThanMax).Should().BeFalse();
             }
@@ -140,7 +139,7 @@ namespace LimitsMiddleware.RateLimiters
             var virtualNow = _getUtcNow();
 
             long sum = 0;
-            for (int i = 0; i < Cumulative; i++)
+            for (var i = 0; i < Cumulative; i++)
             {
                 _bucket.ShouldThrottle(NLessThanMax).Should().BeFalse();
                 sum += NLessThanMax;
@@ -150,7 +149,7 @@ namespace LimitsMiddleware.RateLimiters
 
             _getUtcNow = () => virtualNow.AddSeconds(RefillInterval);
 
-            for (int i = 0; i < 3*Cumulative; i++)
+            for (var i = 0; i < 3*Cumulative; i++)
             {
                 _bucket.ShouldThrottle(NLessThanMax);
             }
@@ -182,7 +181,7 @@ namespace LimitsMiddleware.RateLimiters
             _getUtcNow = () => virtualNow.AddSeconds(RefillInterval);
 
             long sum = 0;
-            for (int i = 0; i < Cumulative; i++)
+            for (var i = 0; i < Cumulative; i++)
             {
                 _bucket.ShouldThrottle(NLessThanMax).Should().BeFalse();
                 sum += NLessThanMax;
@@ -198,8 +197,10 @@ namespace LimitsMiddleware.RateLimiters
             _getUtcNow = () => new DateTime(2014, 2, 27, 0, 0, 0, DateTimeKind.Utc);
             var virtualNow = _getUtcNow();
 
-            for (int i = 0; i < 3*Cumulative; i++)
+            for (var i = 0; i < 3*Cumulative; i++)
+            {
                 _bucket.ShouldThrottle(NLessThanMax);
+            }
 
             var before = _bucket.ShouldThrottle(NLessThanMax);
             var tokensBefore = _bucket.CurrentTokenCount;
@@ -209,7 +210,7 @@ namespace LimitsMiddleware.RateLimiters
 
             _getUtcNow = () => virtualNow.AddSeconds(RefillInterval);
 
-            for (int i = 0; i < 3*Cumulative; i++)
+            for (var i = 0; i < 3*Cumulative; i++)
             {
                 _bucket.ShouldThrottle(NLessThanMax);
             }
@@ -227,8 +228,8 @@ namespace LimitsMiddleware.RateLimiters
             {
                 var throttle = _bucket.ShouldThrottle(NLessThanMax);
                 throttle.Should().BeFalse();
-            });            
-            
+            });
+
             var t2 = new Thread(p =>
             {
                 var throttle = _bucket.ShouldThrottle(NLessThanMax);
@@ -243,7 +244,7 @@ namespace LimitsMiddleware.RateLimiters
 
             _bucket.CurrentTokenCount.Should().Be(MaxTokens - 2*NLessThanMax);
         }
-        
+
         [Fact]
         public void ShouldThrottle_Thread1NGreaterThanMaxAndThread2NGreaterThanMax()
         {
@@ -254,8 +255,8 @@ namespace LimitsMiddleware.RateLimiters
             {
                 var throttle = _bucket.ShouldThrottle(NGreaterThanMax);
                 throttle.Should().BeTrue();
-            });            
-            
+            });
+
             var t2 = new Thread(p =>
             {
                 var throttle = _bucket.ShouldThrottle(NGreaterThanMax);

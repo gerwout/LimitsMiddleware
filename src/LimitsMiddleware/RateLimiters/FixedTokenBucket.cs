@@ -1,37 +1,64 @@
-﻿// https://github.com/robertmircea/RateLimiters
-
-namespace LimitsMiddleware.RateLimiters
+﻿namespace LimitsMiddleware.RateLimiters
 {
     using System;
 
-    public class FixedTokenBucket : TokenBucket
+    internal class FixedTokenBucket
     {
+        private readonly long _bucketTokenCapacty;
+        private readonly long _refillIntervalTicks;
         private readonly GetUtcNow _getUtcNow;
-        private readonly long _ticksRefillInterval;
+        private readonly object _syncObject = new object();
         private long _nextRefillTime;
+        private long _tokens;
 
-        public FixedTokenBucket(
-            long maxTokens,
-            long refillInterval,
-            long refillIntervalInMilliSeconds,
-            GetUtcNow getUtcNow = null)
-            : base(maxTokens)
+        public FixedTokenBucket(long bucketTokenCapacty, TimeSpan refillInterval, GetUtcNow getUtcNow = null)
         {
-            if (refillInterval < 0)
-            {
-                throw new ArgumentOutOfRangeException("refillInterval", "Refill interval cannot be negative");
-            }
-            if (refillIntervalInMilliSeconds <= 0)
-            {
-                throw new ArgumentOutOfRangeException("refillIntervalInMilliSeconds",
-                    "Refill interval in milliseconds cannot be negative");
-            }
+            _bucketTokenCapacty = bucketTokenCapacty;
+            _refillIntervalTicks = refillInterval.Ticks;
             _getUtcNow = getUtcNow ?? SystemClock.GetUtcNow;
-            _ticksRefillInterval = TimeSpan.FromMilliseconds(refillInterval*refillIntervalInMilliSeconds).Ticks;
-
         }
 
-        protected override void UpdateTokens()
+        public bool ShouldThrottle(long tokenCount)
+        {
+            TimeSpan _;
+            return ShouldThrottle(tokenCount, out _);
+        }
+
+        public bool ShouldThrottle(long tokenCount, out TimeSpan waitTimeSpan)
+        {
+            waitTimeSpan = TimeSpan.Zero;
+            lock (_syncObject)
+            {
+                UpdateTokens();
+                if (_tokens < tokenCount)
+                {
+                    var currentTime = _getUtcNow().Ticks;
+                    var waitTicks = _nextRefillTime - currentTime;
+                    if (waitTicks < 0)
+                    {
+                        return false;
+                    }
+                    waitTimeSpan = TimeSpan.FromTicks(waitTicks);
+                    return true;
+                }
+                _tokens -= tokenCount;
+                return false;
+            }
+        }
+
+        public long CurrentTokenCount
+        {
+            get
+            {
+                lock (_syncObject)
+                {
+                    UpdateTokens();
+                    return _tokens;
+                }
+            }
+        }
+
+        private void UpdateTokens()
         {
             var currentTime = _getUtcNow().Ticks;
 
@@ -40,8 +67,8 @@ namespace LimitsMiddleware.RateLimiters
                 return;
             }
 
-            Tokens = BucketTokenCapacity;
-            _nextRefillTime = currentTime + _ticksRefillInterval;
+            _tokens = _bucketTokenCapacty;
+            _nextRefillTime = currentTime + _refillIntervalTicks;
         }
     }
 }

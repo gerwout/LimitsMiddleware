@@ -15,17 +15,17 @@
     public class MaxBandwidthPerRequestTests
     {
         [Theory]
-        [InlineData("file_64KB.txt", 8000, 8)]
-        [InlineData("file_64KB.txt", 16000, 4)]
-        [InlineData("file_512KB.txt", 100000, 5)]
-        [InlineData("file_512KB.txt", 250000, 2)]
+        [InlineData("file_64KB.txt", 8, 4)]
+        [InlineData("file_64KB.txt", 16, 3)]
+        [InlineData("file_512KB.txt", 100, 5)]
+        [InlineData("file_512KB.txt", 200, 2)]
         public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer(
             string file,
-            int maxBytes,
+            int maxKiloBytesPerSeconds,
             int approximateSeconds)
         {
             var stopwatch = new Stopwatch();
-            using (HttpClient httpClient = CreateHttpClient(0))
+            using (HttpClient httpClient = CreateHttpClient())
             {
                 stopwatch.Start();
 
@@ -36,7 +36,7 @@
             }
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
             
-            using (HttpClient httpClient = CreateHttpClient(maxBytes))
+            using (HttpClient httpClient = CreateHttpClient(maxKiloBytesPerSeconds))
             {
                 stopwatch.Restart();
 
@@ -56,7 +56,7 @@
             (abs < 1).Should().BeTrue();
         }
 
-        private static HttpClient CreateHttpClient(int maxBytesPerSecond)
+        private static HttpClient CreateHttpClient(int maxKiloBytesPerSecond = 0)
         {
             var staticFileOptions = new StaticFileOptions
             {
@@ -65,7 +65,7 @@
                     "LimitsMiddleware.Files")
             };
             var appFunc = new AppBuilder()
-                .MaxBandwidthPerRequest(maxBytesPerSecond)
+                .MaxBandwidthPerRequest(maxKiloBytesPerSecond)
                 .UseStaticFiles(staticFileOptions)
                 .Build();
 

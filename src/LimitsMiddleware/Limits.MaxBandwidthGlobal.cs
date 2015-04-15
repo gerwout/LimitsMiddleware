@@ -34,7 +34,6 @@
             getMaxBitsPerSecond.MustNotNull("getMaxBytesToWrite");
 
             var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthGlobal");
-            var rateLimiter = new GlobalRateLimiter(getMaxBitsPerSecond);
 
             return
                 next =>
@@ -45,8 +44,8 @@
                     Stream responseBodyStream = context.Response.Body;
 
                     logger.Debug("Configure streams to be limited.");
-                    context.Request.Body = new ThrottledStream(requestBodyStream, rateLimiter);
-                    context.Response.Body = new ThrottledStream(responseBodyStream, rateLimiter);
+                    context.Request.Body = new ThrottledStream(requestBodyStream);
+                    context.Response.Body = new ThrottledStream(responseBodyStream);
 
                     //TODO consider SendFile interception
                     logger.Debug("With configured limit forwarded.");
