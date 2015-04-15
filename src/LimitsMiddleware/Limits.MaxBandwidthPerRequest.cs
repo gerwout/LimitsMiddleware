@@ -4,7 +4,7 @@
     using System.IO;
     using LimitsMiddleware.LibOwin;
     using LimitsMiddleware.Logging;
-
+    using LimitsMiddleware.RateLimiters;
     using MidFunc = System.Func<
        System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
        System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
@@ -62,11 +62,15 @@
 
                     logger.Debug("Configure streams to be limited.");
                     context.Request.Body = new ThrottledStream(
-                        requestBodyStream, 
-                        getMaxBytesToWrite(limitsRequestContext));
+                        requestBodyStream,
+                        new FixedTokenBucket(
+                            () => getMaxBytesToWrite(limitsRequestContext),
+                            TimeSpan.FromSeconds(1)));
                     context.Response.Body = new ThrottledStream(
                         responseBodyStream,
-                        getMaxBytesToWrite(limitsRequestContext));
+                        new FixedTokenBucket(
+                            () => getMaxBytesToWrite(limitsRequestContext),
+                            TimeSpan.FromSeconds(1)));
 
                     //TODO consider SendFile interception
                     logger.Debug("With configured limit forwarded.");

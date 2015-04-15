@@ -56,7 +56,7 @@
             (abs < 1).Should().BeTrue();
         }
 
-        private static HttpClient CreateHttpClient(int maxKiloBytesPerSecond = 0)
+        private static HttpClient CreateHttpClient(int maxKiloBytesPerSecond = -1)
         {
             var staticFileOptions = new StaticFileOptions
             {

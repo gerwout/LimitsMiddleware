@@ -44,8 +44,8 @@
                     Stream responseBodyStream = context.Response.Body;
 
                     logger.Debug("Configure streams to be limited.");
-                    context.Request.Body = new ThrottledStream(requestBodyStream);
-                    context.Response.Body = new ThrottledStream(responseBodyStream);
+                    context.Request.Body = new ThrottledStream(requestBodyStream, null);
+                    context.Response.Body = new ThrottledStream(responseBodyStream, null);
 
                     //TODO consider SendFile interception
                     logger.Debug("With configured limit forwarded.");

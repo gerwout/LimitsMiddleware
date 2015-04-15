@@ -1,74 +1,93 @@
 ﻿namespace LimitsMiddleware.RateLimiters
 {
     using System;
+    using System.Threading;
+    using LimitsMiddleware.Logging.LogProviders;
 
     internal class FixedTokenBucket
     {
-        private readonly long _bucketTokenCapacty;
+        private readonly Func<int> _getBucketTokenCapacty;
         private readonly long _refillIntervalTicks;
         private readonly GetUtcNow _getUtcNow;
-        private readonly object _syncObject = new object();
         private long _nextRefillTime;
         private long _tokens;
+        private readonly InterlockedBoolean _updatingTokens = new InterlockedBoolean();
+        private int _concurrentRequestCount;
 
-        public FixedTokenBucket(long bucketTokenCapacty, TimeSpan refillInterval, GetUtcNow getUtcNow = null)
+        public FixedTokenBucket(
+            Func<int> getBucketTokenCapacty,
+            TimeSpan refillInterval,
+            GetUtcNow getUtcNow = null)
         {
-            _bucketTokenCapacty = bucketTokenCapacty;
+            _getBucketTokenCapacty = getBucketTokenCapacty;
             _refillIntervalTicks = refillInterval.Ticks;
             _getUtcNow = getUtcNow ?? SystemClock.GetUtcNow;
         }
 
-        public bool ShouldThrottle(long tokenCount)
+        public bool ShouldThrottle(int tokenCount)
         {
             TimeSpan _;
             return ShouldThrottle(tokenCount, out _);
         }
 
-        public bool ShouldThrottle(long tokenCount, out TimeSpan waitTimeSpan)
+        public bool ShouldThrottle(int tokenCount, out TimeSpan waitTimeSpan)
         {
             waitTimeSpan = TimeSpan.Zero;
-            lock (_syncObject)
+            UpdateTokens();
+            long tokens = Interlocked.Read(ref _tokens);
+            if (tokens < tokenCount)
             {
-                UpdateTokens();
-                if (_tokens < tokenCount)
+                var currentTime = _getUtcNow().Ticks;
+                var waitTicks = _nextRefillTime - currentTime;
+                if (waitTicks < 0)
                 {
-                    var currentTime = _getUtcNow().Ticks;
-                    var waitTicks = _nextRefillTime - currentTime;
-                    if (waitTicks < 0)
-                    {
-                        return false;
-                    }
-                    waitTimeSpan = TimeSpan.FromTicks(waitTicks);
-                    return true;
+                    return false;
                 }
-                _tokens -= tokenCount;
-                return false;
+                waitTimeSpan = TimeSpan.FromTicks(waitTicks);
+                return true;
             }
+            Interlocked.Add(ref _tokens, -tokenCount);
+            return false;
         }
 
         public long CurrentTokenCount
         {
             get
             {
-                lock (_syncObject)
-                {
-                    UpdateTokens();
-                    return _tokens;
-                }
+                UpdateTokens();
+                return Interlocked.Read(ref _tokens);
             }
+        }
+
+        public int Capacity
+        {
+            get { return _getBucketTokenCapacty(); }
+        }
+
+        public IDisposable RegisterRequest()
+        {
+            Interlocked.Increment(ref _concurrentRequestCount);
+            return new DisposableAction(() =>
+            {
+                Interlocked.Decrement(ref _concurrentRequestCount);
+            });
         }
 
         private void UpdateTokens()
         {
-            var currentTime = _getUtcNow().Ticks;
-
-            if (currentTime < _nextRefillTime)
+            if (_updatingTokens.EnsureCalledOnce())
             {
                 return;
             }
+            var currentTime = _getUtcNow().Ticks;
 
-            _tokens = _bucketTokenCapacty;
-            _nextRefillTime = currentTime + _refillIntervalTicks;
+            if (currentTime >= _nextRefillTime)
+            {
+                Interlocked.Exchange(ref _tokens, _getBucketTokenCapacty());
+                _nextRefillTime = currentTime + _refillIntervalTicks;
+            }
+
+            _updatingTokens.Set(false);
         }
     }
 }

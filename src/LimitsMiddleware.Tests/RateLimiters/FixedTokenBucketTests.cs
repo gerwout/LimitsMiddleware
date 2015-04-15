@@ -7,17 +7,17 @@
 
     public class FixedTokenBucketTests
     {
-        private const long MaxTokens = 10;
+        private const int MaxTokens = 10;
         private const long RefillInterval = 10;
-        private const long NLessThanMax = 2;
-        private const long NGreaterThanMax = 12;
-        private const long Cumulative = 2;
+        private const int NLessThanMax = 2;
+        private const int NGreaterThanMax = 12;
+        private const int Cumulative = 2;
         private readonly FixedTokenBucket _bucket;
         private GetUtcNow _getUtcNow = () => SystemClock.GetUtcNow();
 
         public FixedTokenBucketTests()
         {
-            _bucket = new FixedTokenBucket(MaxTokens, TimeSpan.FromSeconds(1), () => _getUtcNow());
+            _bucket = new FixedTokenBucket(() => MaxTokens, TimeSpan.FromSeconds(1), () => _getUtcNow());
         }
 
         [Fact]
