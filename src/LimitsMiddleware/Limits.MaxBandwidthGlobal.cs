@@ -4,6 +4,7 @@
     using System.IO;
     using LimitsMiddleware.LibOwin;
     using LimitsMiddleware.Logging;
+    using LimitsMiddleware.RateLimiters;
     using MidFunc = System.Func<
        System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
        System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
@@ -14,42 +15,48 @@
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="maxBitsPerSecond">The maximum number of bits per second to be transferred. Use 0 or a negative
+        /// <param name="maxKiloBytesPerSecond">The maximum number of kilobytes per second to be transferred. Use 0 or a negative
         /// number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        public static MidFunc MaxBandwidthGlobal(int maxBitsPerSecond)
+        public static MidFunc MaxBandwidthGlobal(int maxKiloBytesPerSecond)
         {
-            return MaxBandwidthGlobal(() => maxBitsPerSecond);
+            return MaxBandwidthGlobal(() => maxKiloBytesPerSecond);
         }
 
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="getMaxBitsPerSecond">A delegate to retrieve the maximum number of bits per second to be transferred.
+        /// <param name="getMaxKiloBytesPerSecond">A delegate to retrieve the maximum number of kilo bytes per second to be transferred.
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
         /// <exception cref="System.ArgumentNullException">getMaxBytesToWrite</exception>
-        public static MidFunc MaxBandwidthGlobal(Func<int> getMaxBitsPerSecond)
+        public static MidFunc MaxBandwidthGlobal(Func<int> getMaxKiloBytesPerSecond)
         {
-            getMaxBitsPerSecond.MustNotNull("getMaxBytesToWrite");
+            getMaxKiloBytesPerSecond.MustNotNull("getMaxBytesToWrite");
 
             var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthGlobal");
 
+            var requestTokenBucket = new FixedTokenBucket(getMaxKiloBytesPerSecond, TimeSpan.FromSeconds(1));
+            var responseTokenBucket = new FixedTokenBucket(getMaxKiloBytesPerSecond, TimeSpan.FromSeconds(1));
+
             return
                 next =>
-                env =>
+                async env =>
                 {
-                    var context = new OwinContext(env);
-                    Stream requestBodyStream = context.Request.Body ?? Stream.Null;
-                    Stream responseBodyStream = context.Response.Body;
+                    using (requestTokenBucket.RegisterRequest())
+                    using (responseTokenBucket.RegisterRequest())
+                    {
+                        var context = new OwinContext(env);
+                        Stream requestBodyStream = context.Request.Body ?? Stream.Null;
+                        Stream responseBodyStream = context.Response.Body;
 
-                    logger.Debug("Configure streams to be limited.");
-                    context.Request.Body = new ThrottledStream(requestBodyStream, null);
-                    context.Response.Body = new ThrottledStream(responseBodyStream, null);
+                        logger.Debug("Configure streams to be globally limited.");
+                        context.Request.Body = new ThrottledStream(requestBodyStream, requestTokenBucket);
+                        context.Response.Body = new ThrottledStream(responseBodyStream, responseTokenBucket);
 
-                    //TODO consider SendFile interception
-                    logger.Debug("With configured limit forwarded.");
-                    return next(env);
+                        //TODO consider SendFile interception
+                        await next(env).ConfigureAwait(false);
+                    }
                 };
         }
     }

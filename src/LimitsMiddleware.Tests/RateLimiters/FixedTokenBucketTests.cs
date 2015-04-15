@@ -31,17 +31,6 @@
         }
 
         [Fact]
-        public void ShouldThrottle_WhenCalledWithNTokensGreaterThanMax_ReturnsTrue()
-        {
-            TimeSpan waitTime;
-            var shouldThrottle = _bucket.ShouldThrottle(NGreaterThanMax, out waitTime);
-
-            shouldThrottle.Should().BeTrue();
-            _bucket.CurrentTokenCount.Should().Be(MaxTokens);
-            waitTime.Should().BeGreaterThan(TimeSpan.Zero);
-        }
-
-        [Fact]
         public void ShouldThrottle_WhenCalledCumulativeNTimesIsLessThanMaxTokens_ReturnsFalse()
         {
             for (var i = 0; i < Cumulative; i++)

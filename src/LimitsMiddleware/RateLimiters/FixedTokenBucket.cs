@@ -39,11 +39,11 @@
             {
                 var currentTime = _getUtcNow().Ticks;
                 var waitTicks = _nextRefillTime - currentTime;
-                if (waitTicks < 0)
+                if (waitTicks <= 0)
                 {
                     return false;
                 }
-                waitTimeSpan = TimeSpan.FromTicks(waitTicks);
+                waitTimeSpan = TimeSpan.FromTicks(waitTicks * _concurrentRequestCount);
                 return true;
             }
             Interlocked.Add(ref _tokens, -tokenCount);

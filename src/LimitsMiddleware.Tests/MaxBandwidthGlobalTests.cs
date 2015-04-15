@@ -1,7 +1,6 @@
 namespace LimitsMiddleware
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
     using System.Net.Http;
@@ -17,7 +16,7 @@ namespace LimitsMiddleware
         [Fact]
         public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer_for_multiple_concurrent_requests()
         {
-            int bandwidth = 0;
+            int bandwidth = -1;
             // ReSharper disable once AccessToModifiedClosure - yeah we want to modify it...
             Func<int> getMaxBandwidth = () => bandwidth;
             var stopwatch = new Stopwatch();
@@ -32,7 +31,7 @@ namespace LimitsMiddleware
             }
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
 
-            bandwidth = 2048;
+            bandwidth = 2;
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth, 2))
             {
                 stopwatch.Restart();
@@ -52,7 +51,7 @@ namespace LimitsMiddleware
         [Fact]
         public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer_for_multiple_requests()
         {
-            int bandwidth = 0;
+            int bandwidth = -1;
             // ReSharper disable once AccessToModifiedClosure - yeah we want to modify it...
             Func<int> getMaxBandwidth = () => bandwidth;
 
@@ -68,7 +67,7 @@ namespace LimitsMiddleware
             }
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
 
-            bandwidth = 1024;
+            bandwidth = 1;
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth, 1))
             {
                 stopwatch.Restart();

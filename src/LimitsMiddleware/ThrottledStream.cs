@@ -6,10 +6,6 @@
     using System.Threading.Tasks;
     using LimitsMiddleware.RateLimiters;
 
-    /* From http://www.codeproject.com/Articles/18243/Bandwidth-throttling
-     * Release under CPOL licence http://www.codeproject.com/info/cpol10.aspx
-     */
-
     internal class ThrottledStream : Stream
     {
         private readonly Stream _innerStream;
@@ -80,17 +76,18 @@
                 return;
             }
 
-            var tempCount = count;
+            var tempCountBytes = count;
+            var tempCountKiloBytes = tempCountBytes/1024;
             var rateBytesPerSecond = rateKiloBytesPerSecond * 1024;
 
             // In the unlikely event that the count is greater than the rate (i.e. buffer
-            // is 16KB (typically this is the max sixe) and the rate is < 16Kbs), we'll need
+            // is 16KB (typically this is the max size) and the rate is < 16Kbs), we'll need
             // to split it into multiple.
 
             TimeSpan wait;
-            while (tempCount > rateBytesPerSecond)
+            while (tempCountBytes > rateBytesPerSecond)
             {
-                if (_tokenBucket.ShouldThrottle(tempCount / 1024, out wait))
+                if (_tokenBucket.ShouldThrottle(tempCountKiloBytes, out wait))
                 {
                     Console.WriteLine(wait);
                     if (wait > TimeSpan.Zero)
@@ -101,19 +98,19 @@
                 await _innerStream.WriteAsync(buffer, offset, rateBytesPerSecond, cancellationToken)
                     .ConfigureAwait(false);
                 offset += rateBytesPerSecond;
-                tempCount -= rateBytesPerSecond;
+                tempCountBytes -= rateBytesPerSecond;
             }
             Console.WriteLine("Here {0}", _tokenBucket.CurrentTokenCount);
 
-            while (_tokenBucket.ShouldThrottle(tempCount / 1024, out wait))
+            while (_tokenBucket.ShouldThrottle(tempCountKiloBytes, out wait))
             {
-                Console.WriteLine("{0} {1} {2}", tempCount / 1024, wait, _tokenBucket.CurrentTokenCount);
+                Console.WriteLine("{0} {1} {2}", tempCountKiloBytes, wait, _tokenBucket.CurrentTokenCount);
                 if (wait > TimeSpan.Zero)
                 {
                     await Task.Delay(wait, cancellationToken).ConfigureAwait(false);
                 }
             }
-            await _innerStream.WriteAsync(buffer, offset, tempCount, cancellationToken)
+            await _innerStream.WriteAsync(buffer, offset, tempCountBytes, cancellationToken)
                 .ConfigureAwait(false);
         }
 

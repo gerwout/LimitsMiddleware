@@ -52,7 +52,7 @@
 
             return
                 next =>
-                env =>
+                async env =>
                 {
                     var context = new OwinContext(env);
                     Stream requestBodyStream = context.Request.Body ?? Stream.Null;
@@ -60,21 +60,23 @@
 
                     var limitsRequestContext = new RequestContext(context.Request);
 
-                    logger.Debug("Configure streams to be limited.");
-                    context.Request.Body = new ThrottledStream(
-                        requestBodyStream,
-                        new FixedTokenBucket(
-                            () => getMaxBytesToWrite(limitsRequestContext),
-                            TimeSpan.FromSeconds(1)));
-                    context.Response.Body = new ThrottledStream(
-                        responseBodyStream,
-                        new FixedTokenBucket(
-                            () => getMaxBytesToWrite(limitsRequestContext),
-                            TimeSpan.FromSeconds(1)));
+                    var requestTokenBucket = new FixedTokenBucket(
+                        () => getMaxBytesToWrite(limitsRequestContext), TimeSpan.FromSeconds(1));
+                    var responseTokenBucket = new FixedTokenBucket(
+                        () => getMaxBytesToWrite(limitsRequestContext), TimeSpan.FromSeconds(1));
 
-                    //TODO consider SendFile interception
-                    logger.Debug("With configured limit forwarded.");
-                    return next(env);
+                    using (requestTokenBucket.RegisterRequest())
+                    using (responseTokenBucket.RegisterRequest())
+                    {
+
+                        logger.Debug("Configure streams to be limited.");
+                        context.Request.Body = new ThrottledStream(requestBodyStream, requestTokenBucket);
+                        context.Response.Body = new ThrottledStream(responseBodyStream, responseTokenBucket);
+
+                        //TODO consider SendFile interception
+                        logger.Debug("With configured limit forwarded.");
+                        await next(env).ConfigureAwait(false);
+                    }
                 };
         }
     }
