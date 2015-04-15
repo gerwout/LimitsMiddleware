@@ -16,11 +16,10 @@
 
         public FixedTokenBucket(
             Func<int> getBucketTokenCapacty,
-            TimeSpan refillInterval,
             GetUtcNow getUtcNow = null)
         {
-            _getBucketTokenCapacty = getBucketTokenCapacty;
-            _refillIntervalTicks = refillInterval.Ticks;
+            _getBucketTokenCapacty = () => getBucketTokenCapacty() / 8;
+            _refillIntervalTicks = TimeSpan.FromMilliseconds(100).Ticks;
             _getUtcNow = getUtcNow ?? SystemClock.GetUtcNow;
         }
 

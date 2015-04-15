@@ -17,7 +17,7 @@
 
         public FixedTokenBucketTests()
         {
-            _bucket = new FixedTokenBucket(() => MaxTokens, TimeSpan.FromSeconds(1), () => _getUtcNow());
+            _bucket = new FixedTokenBucket(() => MaxTokens, () => _getUtcNow());
         }
 
         [Fact]

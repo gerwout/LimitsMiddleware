@@ -84,7 +84,7 @@
 
             return
                 next =>
-                env =>
+                async env =>
                 {
                     var context = new OwinContext(env);
                     var limitsRequestContext = new RequestContext(context.Request);
@@ -92,12 +92,13 @@
 
                     if (delay <= TimeSpan.Zero)
                     {
-                        return next(env);
+                        await next(env);
+                        return;
                     }
 
-                    // using explicit continuation because async / await adds some overhead!
-                    return Task.Delay(delay, context.Request.CallCancelled)
-                        .ContinueWith(_ => next(env), context.Request.CallCancelled);
+                    logger.Debug("Delaying response by {0}".FormatWith(delay));
+                    await Task.Delay(delay, context.Request.CallCancelled);
+                    await next(env);
                 };
         }
     }

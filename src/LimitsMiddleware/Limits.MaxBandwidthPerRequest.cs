@@ -48,8 +48,6 @@
         {
             getMaxBytesToWrite.MustNotNull("getMaxBytesToWrite");
 
-            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthPerRequest");
-
             return
                 next =>
                 async env =>
@@ -61,20 +59,18 @@
                     var limitsRequestContext = new RequestContext(context.Request);
 
                     var requestTokenBucket = new FixedTokenBucket(
-                        () => getMaxBytesToWrite(limitsRequestContext), TimeSpan.FromSeconds(1));
+                        () => getMaxBytesToWrite(limitsRequestContext));
                     var responseTokenBucket = new FixedTokenBucket(
-                        () => getMaxBytesToWrite(limitsRequestContext), TimeSpan.FromSeconds(1));
+                        () => getMaxBytesToWrite(limitsRequestContext));
 
                     using (requestTokenBucket.RegisterRequest())
                     using (responseTokenBucket.RegisterRequest())
                     {
 
-                        logger.Debug("Configure streams to be limited.");
                         context.Request.Body = new ThrottledStream(requestBodyStream, requestTokenBucket);
                         context.Response.Body = new ThrottledStream(responseBodyStream, responseTokenBucket);
 
                         //TODO consider SendFile interception
-                        logger.Debug("With configured limit forwarded.");
                         await next(env).ConfigureAwait(false);
                     }
                 };

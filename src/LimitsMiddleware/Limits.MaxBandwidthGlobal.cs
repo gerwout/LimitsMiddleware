@@ -36,8 +36,8 @@
 
             var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthGlobal");
 
-            var requestTokenBucket = new FixedTokenBucket(getMaxKiloBytesPerSecond, TimeSpan.FromSeconds(1));
-            var responseTokenBucket = new FixedTokenBucket(getMaxKiloBytesPerSecond, TimeSpan.FromSeconds(1));
+            var requestTokenBucket = new FixedTokenBucket(getMaxKiloBytesPerSecond);
+            var responseTokenBucket = new FixedTokenBucket(getMaxKiloBytesPerSecond);
 
             return
                 next =>
