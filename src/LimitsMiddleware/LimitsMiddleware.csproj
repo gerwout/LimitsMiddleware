@@ -61,7 +61,6 @@
     <Compile Include="Limits.ConnectionTimeout.cs" />
     <Compile Include="Limits.MaxBandwidthPerRequest.cs" />
     <Compile Include="Limits.MaxBandwidthGlobal.cs" />
-    <Compile Include="MovingAverageCalculator.cs" />
     <Compile Include="PerRequestRateLimiter.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

@@ -90,7 +90,6 @@
     <Compile Include="MaxQueryStringTests.cs" />
     <Compile Include="MaxUrlLengthTests.cs" />
     <Compile Include="MinResponseDelayMiddlewareTests.cs" />
-    <Compile Include="MovingAverageTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Helpers\TaskExt.cs" />
     <Compile Include="RateLimiters\FixedTokenBucketTests.cs" />
