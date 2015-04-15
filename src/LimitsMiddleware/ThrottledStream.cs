@@ -77,7 +77,6 @@
             }
 
             var tempCountBytes = count;
-            var tempCountKiloBytes = tempCountBytes/1024;
             var rateBytesPerSecond = rateKiloBytesPerSecond * 1024;
 
             // In the unlikely event that the count is greater than the rate (i.e. buffer
@@ -87,9 +86,8 @@
             TimeSpan wait;
             while (tempCountBytes > rateBytesPerSecond)
             {
-                if (_tokenBucket.ShouldThrottle(tempCountKiloBytes, out wait))
+                if (_tokenBucket.ShouldThrottle(tempCountBytes / 1024, out wait))
                 {
-                    Console.WriteLine(wait);
                     if (wait > TimeSpan.Zero)
                     {
                         await Task.Delay(wait, cancellationToken).ConfigureAwait(false);
@@ -100,7 +98,7 @@
                 offset += rateBytesPerSecond;
                 tempCountBytes -= rateBytesPerSecond;
             }
-            while (_tokenBucket.ShouldThrottle(tempCountKiloBytes, out wait))
+            while (_tokenBucket.ShouldThrottle(tempCountBytes / 1024, out wait))
             {
                 if (wait > TimeSpan.Zero)
                 {
