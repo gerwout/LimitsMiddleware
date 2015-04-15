@@ -110,7 +110,7 @@ namespace LimitsMiddleware
                     }
 
                     byte[] bytes = Enumerable.Repeat((byte) 0x1, 1024).ToArray();
-                    const int batches = 10;
+                    const int batches = 4;
                     context.Response.StatusCode = 200;
                     context.Response.ReasonPhrase = "OK";
                     context.Response.ContentLength = bytes.LongLength * batches;
