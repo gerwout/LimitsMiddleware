@@ -1,4 +1,7 @@
-﻿namespace LimitsMiddleware.RateLimiters
+﻿// https://github.com/robertmircea/RateLimiters
+
+
+namespace LimitsMiddleware.RateLimiters
 {
     using System;
     using FluentAssertions;

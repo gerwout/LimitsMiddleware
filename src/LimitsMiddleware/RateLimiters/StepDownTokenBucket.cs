@@ -1,4 +1,6 @@
-﻿namespace LimitsMiddleware.RateLimiters
+﻿// https://github.com/robertmircea/RateLimiters
+
+namespace LimitsMiddleware.RateLimiters
 {
     public class StepDownTokenBucket : LeakyTokenBucket
     {

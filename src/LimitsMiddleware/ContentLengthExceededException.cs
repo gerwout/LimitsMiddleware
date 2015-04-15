@@ -1,4 +1,6 @@
-﻿namespace LimitsMiddleware
+﻿// https://github.com/robertmircea/RateLimiters
+
+namespace LimitsMiddleware
 {
     using System;
 
