@@ -100,11 +100,8 @@
                 offset += rateBytesPerSecond;
                 tempCountBytes -= rateBytesPerSecond;
             }
-            Console.WriteLine("Here {0}", _tokenBucket.CurrentTokenCount);
-
             while (_tokenBucket.ShouldThrottle(tempCountKiloBytes, out wait))
             {
-                Console.WriteLine("{0} {1} {2}", tempCountKiloBytes, wait, _tokenBucket.CurrentTokenCount);
                 if (wait > TimeSpan.Zero)
                 {
                     await Task.Delay(wait, cancellationToken).ConfigureAwait(false);
