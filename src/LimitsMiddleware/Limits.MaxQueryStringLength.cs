@@ -62,9 +62,9 @@
                                 maxQueryStringLength));
                             context.Response.StatusCode = 414;
                             context.Response.ReasonPhrase = "Request-URI Too Large";
+                            context.Response.Write(context.Response.ReasonPhrase);
                             return;
                         }
-                        logger.Debug("Querystring length check passed.");
                     }
                     else
                     {

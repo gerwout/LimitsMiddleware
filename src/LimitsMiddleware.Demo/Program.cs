@@ -20,9 +20,13 @@
                 .Console()
                 .MinimumLevel.Verbose()
                 .CreateLogger();
-            
 
             var app = new AppBuilder();
+
+            app.MaxQueryStringLength(80);
+
+            app.MaxConcurrentRequests(4);
+
             app.MinResponseDelay(context =>
             {
                 var queryParams = HttpUtility.ParseQueryString(context.Uri.Query);
@@ -45,7 +49,6 @@
 
             app.MaxBandwidthGlobal(10000);
 
-            app.MaxConcurrentRequests(4);
 
             app.Use(async (context, next) =>
             {

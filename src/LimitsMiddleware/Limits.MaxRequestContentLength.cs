@@ -63,7 +63,7 @@
                     logger.Debug("Max valid content length is {0}.".FormatWith(maxContentLength));
                     if (!IsChunkedRequest(request))
                     {
-                        logger.Debug("Not a chunked request. Checking content lengt header.");
+                        logger.Debug("Not a chunked request. Checking content length header.");
                         string contentLengthHeaderValue = request.Headers.Get("Content-Length");
                         if (contentLengthHeaderValue == null)
                         {

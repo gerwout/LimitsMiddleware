@@ -53,12 +53,12 @@
     <Compile Include="Limits.MaxUrlLength.cs" />
     <Compile Include="Limits.MaxRequestContentLength.cs" />
     <Compile Include="Limits.MaxQueryStringLength.cs" />
-    <Compile Include="Limits.MaxConcurrentRequests.cs" />
+    <Compile Include="Limits.ConnectionTimeout.cs" />
     <Compile Include="Limits.cs" />
     <Compile Include="ContentLengthExceededException.cs" />
     <Compile Include="ContentLengthLimitingStream.cs" />
     <Compile Include="Guard.cs" />
-    <Compile Include="Limits.ConnectionTimeout.cs" />
+    <Compile Include="Limits.MaxConcurrentRequests.cs" />
     <Compile Include="Limits.MaxBandwidthPerRequest.cs" />
     <Compile Include="Limits.MaxBandwidthGlobal.cs" />
     <Compile Include="PerRequestRateLimiter.cs" />

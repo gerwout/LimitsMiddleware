@@ -1,7 +1,7 @@
 ﻿namespace LimitsMiddleware
 {
     using System;
-    using System.Threading;
+    using System.IO;
     using LimitsMiddleware.LibOwin;
     using LimitsMiddleware.Logging;
     using MidFunc = System.Func<
@@ -12,77 +12,61 @@
     public static partial class Limits
     {
         /// <summary>
-        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
         /// </summary>
-        /// <param name="maxConcurrentRequests">The maximum number of concurrent requests. Use 0 or a negative
-        /// number to specify unlimited number of concurrent requests.</param>
+        /// <param name="timeout">The timeout.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        public static MidFunc MaxConcurrentRequests(int maxConcurrentRequests)
+        public static MidFunc ConnectionTimeout(TimeSpan timeout)
         {
-            return MaxConcurrentRequests(() => maxConcurrentRequests);
+            timeout.MustNotNull("options");
+
+            return ConnectionTimeout(() => timeout);
         }
 
         /// <summary>
-        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
         /// </summary>
-        /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
-        /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
+        /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
+        /// to supply different values at runtime.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">getMaxConcurrentRequests</exception>
-        public static MidFunc MaxConcurrentRequests(Func<int> getMaxConcurrentRequests)
+        /// <exception cref="System.ArgumentNullException">getTimeout</exception>
+        public static MidFunc ConnectionTimeout(Func<TimeSpan> getTimeout)
         {
-            getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
+            getTimeout.MustNotNull("getTimeout");
 
-            return MaxConcurrentRequests(_ => getMaxConcurrentRequests());
+            return ConnectionTimeout(_ => getTimeout());
         }
 
         /// <summary>
-        /// Limits the number of concurrent requests that can be handled used by the subsequent stages in the owin pipeline.
+        /// Timeouts the connection if there hasn't been an read activity on the request body stream or any
+        /// write activity on the response body stream.
         /// </summary>
-        /// <param name="getMaxConcurrentRequests">A delegate to retrieve the maximum number of concurrent requests. Allows you
-        /// to supply different values at runtime. Use 0 or a negative number to specify unlimited number of concurrent requests.</param>
+        /// <param name="getTimeout">A delegate to retrieve the timeout timespan. Allows you
+        /// to supply different values at runtime.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">getMaxConcurrentRequests</exception>
-        public static MidFunc MaxConcurrentRequests(Func<RequestContext, int> getMaxConcurrentRequests)
+        /// <exception cref="System.ArgumentNullException">getTimeout</exception>
+        public static MidFunc ConnectionTimeout(Func<RequestContext, TimeSpan> getTimeout)
         {
-            getMaxConcurrentRequests.MustNotNull("getMaxConcurrentRequests");
+            getTimeout.MustNotNull("getTimeout");
 
-            var logger = LogProvider.GetLogger("LimitsMiddleware.MaxConcurrentRequests");
-            int concurrentRequestCounter = 0;
+            var logger = LogProvider.GetLogger("LimitsMiddleware.ConnectionTimeout");
 
             return
                 next =>
-                async env =>
+                env =>
                 {
-                    var owinRequest = new OwinRequest(env);
-                    var limitsRequestContext = new RequestContext(owinRequest);
-                    int maxConcurrentRequests = getMaxConcurrentRequests(limitsRequestContext);
-                    if (maxConcurrentRequests <= 0)
-                    {
-                        maxConcurrentRequests = int.MaxValue;
-                    }
-                    try
-                    {
-                        int concurrentRequests = Interlocked.Increment(ref concurrentRequestCounter);
-                        logger.Debug("Concurrent counter incremented.");
-                        logger.Debug("Checking concurrent request #{0}.".FormatWith(concurrentRequests));
-                        if (concurrentRequests > maxConcurrentRequests)
-                        {
-                            logger.Info("Limit of {0} exceeded with #{1}. Request rejected."
-                                .FormatWith(maxConcurrentRequests, concurrentRequests));
-                            IOwinResponse response = new OwinContext(env).Response;
-                            response.StatusCode = 503;
-                            response.ReasonPhrase = "Service Unavailable";
-                            return;
-                        }
-                        logger.Debug("Request forwarded.");
-                        await next(env);
-                    }
-                    finally
-                    {
-                        Interlocked.Decrement(ref concurrentRequestCounter);
-                        logger.Debug("Concurrent counter decremented.");
-                    }
+                    var context = new OwinContext(env);
+                    var limitsRequestContext = new RequestContext(context.Request);
+
+                    Stream requestBodyStream = context.Request.Body ?? Stream.Null;
+                    Stream responseBodyStream = context.Response.Body;
+
+                    TimeSpan connectionTimeout = getTimeout(limitsRequestContext);
+                    context.Request.Body = new TimeoutStream(requestBodyStream, connectionTimeout);
+                    context.Response.Body = new TimeoutStream(responseBodyStream, connectionTimeout);
+                    return next(env);
                 };
         }
     }
