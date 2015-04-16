@@ -49,7 +49,7 @@
                     : -1;
             });
 
-            app.MaxBandwidthGlobal(10000);
+            app.MaxBandwidthGlobal(10 * 1024 * 1024);
 
 
             app.Use(async (context, next) =>
