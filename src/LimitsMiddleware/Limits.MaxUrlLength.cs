@@ -61,6 +61,7 @@
                             unescapedUri.Length));
                         context.Response.StatusCode = 414;
                         context.Response.ReasonPhrase = "Request-URI Too Large";
+                        context.Response.Write(context.Response.ReasonPhrase);
                         return Task.FromResult(0);
                     }
                     logger.Debug("Check passed. Request forwarded.");

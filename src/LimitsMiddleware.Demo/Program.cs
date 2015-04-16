@@ -23,6 +23,8 @@
 
             var app = new AppBuilder();
 
+            app.MaxUrlLength(100);
+
             app.MaxQueryStringLength(80);
 
             app.MaxConcurrentRequests(4);
