@@ -109,5 +109,17 @@
                     }
                 };
         }
+
+        private static bool IsChunkedRequest(IOwinRequest request)
+        {
+            string header = request.Headers.Get("Transfer-Encoding");
+            return header != null && header.Equals("chunked", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static void SetResponseStatusCodeAndReasonPhrase(IOwinContext context, int statusCode, string reasonPhrase)
+        {
+            context.Response.StatusCode = statusCode;
+            context.Response.ReasonPhrase = reasonPhrase;
+        }
     }
 }
