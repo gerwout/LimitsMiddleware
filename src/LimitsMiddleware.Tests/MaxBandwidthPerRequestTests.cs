@@ -15,10 +15,10 @@
     public class MaxBandwidthPerRequestTests
     {
         [Theory]
-        [InlineData("file_64KB.txt", 8, 4)]
-        [InlineData("file_64KB.txt", 16, 3)]
-        [InlineData("file_512KB.txt", 100, 5)]
-        [InlineData("file_512KB.txt", 200, 2)]
+        [InlineData("file_64KB.txt", 8000, 8)]
+        [InlineData("file_64KB.txt", 16000, 4)]
+        [InlineData("file_512KB.txt", 100000, 5)]
+        [InlineData("file_512KB.txt", 200000, 2)]
         public async Task When_bandwidth_is_applied_then_time_to_receive_data_should_be_longer(
             string file,
             int maxKiloBytesPerSeconds,
@@ -45,6 +45,8 @@
 
                 stopwatch.Stop();
             }
+
+
             TimeSpan limitedTimeSpan = stopwatch.Elapsed;
 
             Console.WriteLine("No limits: {0}", nolimitTimeSpan);

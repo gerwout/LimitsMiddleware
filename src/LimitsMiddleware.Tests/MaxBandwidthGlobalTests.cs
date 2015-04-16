@@ -31,7 +31,7 @@ namespace LimitsMiddleware
             }
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
 
-            bandwidth = 2;
+            bandwidth = 2000;
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth, 2))
             {
                 stopwatch.Restart();
@@ -67,7 +67,7 @@ namespace LimitsMiddleware
             }
             TimeSpan nolimitTimeSpan = stopwatch.Elapsed;
 
-            bandwidth = 1;
+            bandwidth = 1000;
             using (HttpClient httpClient = CreateHttpClient(getMaxBandwidth, 1))
             {
                 stopwatch.Restart();
