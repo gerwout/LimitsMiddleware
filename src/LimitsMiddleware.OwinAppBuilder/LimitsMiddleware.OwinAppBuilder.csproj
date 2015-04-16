@@ -42,7 +42,12 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
-    <Compile Include="AppBuilderExtensions.cs" />
+    <Compile Include="AppBuilderExtensions.MaxRequestContentLength.cs" />
+    <Compile Include="AppBuilderExtensions.MaxQueryStringLength.cs" />
+    <Compile Include="AppBuilderExtensions.MaxConcurrentRequests.cs" />
+    <Compile Include="AppBuilderExtensions.MaxBandwidthPerRequesty.cs" />
+    <Compile Include="AppBuilderExtensions.MaxUrlLength.cs" />
+    <Compile Include="AppBuilderExtensions.ConnectionTimeout.cs" />
     <Compile Include="AppBuilderExtensions.MinResponseDelay.cs" />
     <Compile Include="AppBuilderExtensions.MaxBandwidthGlobal.cs" />
     <Compile Include="Guard.cs" />
