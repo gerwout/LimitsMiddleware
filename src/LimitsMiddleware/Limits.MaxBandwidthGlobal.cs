@@ -38,6 +38,7 @@
 
             var requestTokenBucket = new FixedTokenBucket(getBytesPerSecond);
             var responseTokenBucket = new FixedTokenBucket(getBytesPerSecond);
+            logger.Debug("Configure streams to be globally limited.");
 
             return
                 next =>
@@ -50,7 +51,6 @@
                         Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                         Stream responseBodyStream = context.Response.Body;
 
-                        logger.Debug("Configure streams to be globally limited.");
                         context.Request.Body = new ThrottledStream(requestBodyStream, requestTokenBucket);
                         context.Response.Body = new ThrottledStream(responseBodyStream, responseTokenBucket);
 
