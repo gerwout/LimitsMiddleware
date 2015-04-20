@@ -8,7 +8,9 @@
         System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
         >;
 
+#pragma warning disable 1591
     public static partial class AppBuilderExtensions
+#pragma warning restore 1591
     {
         /// <summary>
         /// Limits the length of the request content.
