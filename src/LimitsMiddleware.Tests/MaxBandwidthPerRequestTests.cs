@@ -55,7 +55,7 @@
             limitedTimeSpan.Should().BeGreaterThan(nolimitTimeSpan);
 
             var abs = Math.Abs((limitedTimeSpan.TotalSeconds - nolimitTimeSpan.TotalSeconds) - approximateSeconds);
-            (abs < 1).Should().BeTrue();
+            (abs < 1).Should().BeTrue("value {0} >= 1", abs);
         }
 
         private static HttpClient CreateHttpClient(int maxKiloBytesPerSecond = -1)

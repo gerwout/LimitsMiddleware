@@ -1,7 +1,7 @@
 ﻿namespace LimitsMiddleware.RateLimiters
 {
     using System;
-    using System.Threading;
+    using System.Threading.Tasks;
     using FluentAssertions;
     using Xunit;
 
@@ -211,52 +211,44 @@
         }
 
         [Fact]
-        public void ShouldThrottle_WhenThread1NLessThanMaxAndThread2NLessThanMax()
+        public async Task ShouldThrottle_WhenThread1NLessThanMaxAndThread2NLessThanMax()
         {
-            var t1 = new Thread(p =>
+            var task1 = Task.Run(() => 
             {
                 var throttle = _bucket.ShouldThrottle(NLessThanMax);
                 throttle.Should().BeFalse();
             });
 
-            var t2 = new Thread(p =>
+            var task2 = Task.Run(() =>
             {
                 var throttle = _bucket.ShouldThrottle(NLessThanMax);
                 throttle.Should().BeFalse();
             });
 
-            t1.Start();
-            t2.Start();
-
-            t1.Join();
-            t2.Join();
+            await Task.WhenAll(task1, task2);
 
             _bucket.CurrentTokenCount.Should().Be(MaxTokens - 2*NLessThanMax);
         }
 
         [Fact]
-        public void ShouldThrottle_Thread1NGreaterThanMaxAndThread2NGreaterThanMax()
+        public async Task ShouldThrottle_Thread1NGreaterThanMaxAndThread2NGreaterThanMax()
         {
             var shouldThrottle = _bucket.ShouldThrottle(NGreaterThanMax);
             shouldThrottle.Should().BeTrue();
 
-            var t1 = new Thread(p =>
+            var task1 = Task.Run(() =>
             {
                 var throttle = _bucket.ShouldThrottle(NGreaterThanMax);
                 throttle.Should().BeTrue();
             });
 
-            var t2 = new Thread(p =>
+            var task2 = Task.Run(() =>
             {
                 var throttle = _bucket.ShouldThrottle(NGreaterThanMax);
                 throttle.Should().BeTrue();
             });
 
-            t1.Start();
-            t2.Start();
-
-            t1.Join();
-            t2.Join();
+            await Task.WhenAll(task1, task2);
 
             _bucket.CurrentTokenCount.Should().Be(MaxTokens);
         }
