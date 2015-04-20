@@ -16,7 +16,7 @@
         <tags>owin, middleware, throttling, limits</tags>
         <frameworkAssemblies />
         <releaseNotes>
-            Remove dependency on owin.dll
+            New Limits - Minimum response delay and maximum global bandwidth.
         </releaseNotes>
     </metadata>
     <files>
