@@ -10,15 +10,16 @@
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
         <title>Limits Middleware AppBuilder Integration</title>
         <description>
-            Integration package for the Limits middleware for users of the (now deprecated) IAppBuilder.
+            Integration package for the Limits middleware for users of IAppBuilder.
         </description>
         <tags>owin, middleware, throttling, limits</tags>
         <frameworkAssemblies />
         <dependencies>
-            <dependency id="LimitsMiddleware" version="[2.0.1,3.0)"/>
+            <dependency id="LimitsMiddleware" version="[3.0, 4.0)"/>
             <dependency id="Owin" version="[1.0,2.0)"/>
         </dependencies>
         <releaseNotes>
+            New Limits - Minimum response delay and maximum global bandwidth.
         </releaseNotes>
     </metadata>
     <files>
