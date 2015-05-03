@@ -10,7 +10,7 @@
     {
         private readonly Stream _innerStream;
         private readonly TimeSpan _timeout;
-        private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
+        private static readonly ILog Logger = LogProvider.For<TimeoutStream>();
         private readonly Timer _timer;
 
         public TimeoutStream(Stream innerStream, TimeSpan timeout)
