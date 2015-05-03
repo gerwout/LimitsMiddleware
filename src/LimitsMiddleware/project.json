@@ -1,17 +1,34 @@
-{
+﻿{
   "version": "1.0.0-*",
   "description": "",
-  "authors": [ "" ],
+  "authors": [ "Damian Hckey" ],
   "tags": [ "" ],
   "projectUrl": "",
   "licenseUrl": "",
 
-  "dependencies": {
-    
-
+  "dependencies": {    
   },
 
   "frameworks": {
-    
+    "dnxcore50": {
+      "compilationOptions": {
+        "define": [ "DNXCORE50", "LIBLOG_PORTABLE" ]
+      },
+      "dependencies": {
+        "System.Console": "4.0.0-beta-22816",
+        "System.Diagnostics.Debug": "4.0.10-beta-22830",
+        "System.Globalization.Extensions": "4.0.0-beta-22816",
+        "System.IO": "4.0.10-beta-22816",
+        "System.Linq": "4.0.0-beta-22816",
+        "System.Reflection": "4.0.10-beta-22816",
+        "System.Reflection.Extensions": "4.0.0-beta-22816",
+        "System.Runtime": "4.0.20-beta-22816",
+        "System.Runtime.Extensions": "4.0.10-beta-22816",
+        "System.Security.Claims": "4.0.0-beta-22816",
+        "System.Text.RegularExpressions": "4.0.10-beta-22816",
+        "System.Threading": "4.0.10-beta-22816",
+        "Microsoft.CSharp": "4.0.0-beta-22816"
+      }
+    }
   }
 }
