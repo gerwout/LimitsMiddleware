@@ -100,6 +100,7 @@
             return currentNumberOfBytesRead;
         }
 
+#if !DNXCORE50
         public override IAsyncResult BeginRead(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
             return _innerStream.BeginRead(buffer, offset, count, callback, state);
@@ -113,6 +114,7 @@
 
             return currentNumberOfBytesRead;
         }
+#endif
 
         public override int ReadByte()
         {
@@ -153,6 +155,7 @@
             return _innerStream.WriteAsync(buffer, offset, count, cancellationToken);
         }
 
+#if !DNXCORE50
         public override IAsyncResult BeginWrite(byte[] buffer, int offset, int count, AsyncCallback callback, object state)
         {
             return _innerStream.BeginWrite(buffer, offset, count, callback, state);
@@ -162,6 +165,7 @@
         {
             _innerStream.EndWrite(asyncResult);
         }
+#endif
 
         public override void WriteByte(byte value)
         {

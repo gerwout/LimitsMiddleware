@@ -51,10 +51,19 @@
         {
             _innerStream.Flush();
         }
-
+#if !DNXCORE50
         public override void Close()
         {
             _innerStream.Close();
+        }
+#endif
+        protected override void Dispose(bool disposing)
+        {
+            if (disposing)
+            {
+                _innerStream.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         public override int Read(byte[] buffer, int offset, int count)
