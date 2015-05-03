@@ -4,7 +4,6 @@
     using System.Linq;
     using System.Net;
     using System.Net.Http;
-    using System.Runtime.InteropServices;
     using System.Threading.Tasks;
     using FluentAssertions;
     using Microsoft.Owin.Builder;
