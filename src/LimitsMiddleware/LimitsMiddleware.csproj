@@ -60,11 +60,8 @@
     <Compile Include="Limits.MaxConcurrentRequests.cs" />
     <Compile Include="Limits.MaxBandwidthPerRequest.cs" />
     <Compile Include="Limits.MaxBandwidthGlobal.cs" />
-    <Compile Include="PerRequestRateLimiter.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="GlobalRateLimiter.cs" />
-    <Compile Include="RateLimiterBase.cs" />
     <Compile Include="RateLimiters\FixedTokenBucket.cs" />
     <Compile Include="RateLimiters\GetUtcNow.cs" />
     <Compile Include="RateLimiters\SystemClock.cs" />
