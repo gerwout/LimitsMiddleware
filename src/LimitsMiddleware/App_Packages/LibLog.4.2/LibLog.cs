@@ -56,6 +56,7 @@ namespace LimitsMiddleware.Logging
 #if !LIBLOG_PROVIDERS_ONLY
     using System.Diagnostics;
     using System.Runtime.CompilerServices;
+    using System.Diagnostics;
 #endif
 
 #if LIBLOG_PROVIDERS_ONLY
