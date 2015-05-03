@@ -69,15 +69,14 @@
 
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            var rateKiloBytesPerSecond = _tokenBucket.Capacity;
-            if (rateKiloBytesPerSecond <= 0)
+            var rateBytesPerSecond = Convert.ToInt32(_tokenBucket.Rate);
+            if (rateBytesPerSecond <= 0)
             {
                 _innerStream.Write(buffer, offset, count);
                 return;
             }
 
             var tempCountBytes = count;
-            var rateBytesPerSecond = rateKiloBytesPerSecond * 1024;
 
             // In the unlikely event that the count is greater than the rate (i.e. buffer
             // is 16KB (typically this is the max size) and the rate is < 16Kbs), we'll need
@@ -86,7 +85,7 @@
             TimeSpan wait;
             while (tempCountBytes > rateBytesPerSecond)
             {
-                if (_tokenBucket.ShouldThrottle(tempCountBytes / 1024, out wait))
+                if (_tokenBucket.ShouldThrottle(tempCountBytes, out wait))
                 {
                     if (wait > TimeSpan.Zero)
                     {
@@ -98,7 +97,7 @@
                 offset += rateBytesPerSecond;
                 tempCountBytes -= rateBytesPerSecond;
             }
-            while (_tokenBucket.ShouldThrottle(tempCountBytes / 1024, out wait))
+            while (_tokenBucket.ShouldThrottle(tempCountBytes, out wait))
             {
                 if (wait > TimeSpan.Zero)
                 {

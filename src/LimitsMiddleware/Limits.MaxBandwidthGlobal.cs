@@ -15,29 +15,30 @@
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="maxKiloBytesPerSecond">The maximum number of kilobytes per second to be transferred. Use 0 or a negative
+        /// <param name="maxBytesPerSecond">The maximum number of bytes per second to be transferred. Use 0 or a negative
         /// number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        public static MidFunc MaxBandwidthGlobal(int maxKiloBytesPerSecond)
+        public static MidFunc MaxBandwidthGlobal(int maxBytesPerSecond)
         {
-            return MaxBandwidthGlobal(() => maxKiloBytesPerSecond);
+            return MaxBandwidthGlobal(() => maxBytesPerSecond);
         }
 
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="getMaxKiloBytesPerSecond">A delegate to retrieve the maximum number of kilo bytes per second to be transferred.
+        /// <param name="getBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
         /// <exception cref="System.ArgumentNullException">getMaxBytesToWrite</exception>
-        public static MidFunc MaxBandwidthGlobal(Func<int> getMaxKiloBytesPerSecond)
+        public static MidFunc MaxBandwidthGlobal(Func<int> getBytesPerSecond)
         {
-            getMaxKiloBytesPerSecond.MustNotNull("getMaxBytesToWrite");
+            getBytesPerSecond.MustNotNull("getMaxBytesToWrite");
 
             var logger = LogProvider.GetLogger("LimitsMiddleware.MaxBandwidthGlobal");
 
-            var requestTokenBucket = new FixedTokenBucket(getMaxKiloBytesPerSecond);
-            var responseTokenBucket = new FixedTokenBucket(getMaxKiloBytesPerSecond);
+            var requestTokenBucket = new FixedTokenBucket(getBytesPerSecond);
+            var responseTokenBucket = new FixedTokenBucket(getBytesPerSecond);
+            logger.Debug("Configure streams to be globally limited.");
 
             return
                 next =>
@@ -50,7 +51,6 @@
                         Stream requestBodyStream = context.Request.Body ?? Stream.Null;
                         Stream responseBodyStream = context.Response.Body;
 
-                        logger.Debug("Configure streams to be globally limited.");
                         context.Request.Body = new ThrottledStream(requestBodyStream, requestTokenBucket);
                         context.Response.Body = new ThrottledStream(responseBodyStream, responseTokenBucket);
 

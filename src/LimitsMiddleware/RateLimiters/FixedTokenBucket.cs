@@ -8,6 +8,7 @@
     {
         private readonly Func<int> _getBucketTokenCapacty;
         private readonly long _refillIntervalTicks;
+        private readonly TimeSpan _refillInterval;
         private readonly GetUtcNow _getUtcNow;
         private long _nextRefillTime;
         private long _tokens;
@@ -18,8 +19,9 @@
             Func<int> getBucketTokenCapacty,
             GetUtcNow getUtcNow = null)
         {
-            _getBucketTokenCapacty = () => getBucketTokenCapacty() / 8;
-            _refillIntervalTicks = TimeSpan.FromMilliseconds(100).Ticks;
+            _getBucketTokenCapacty = getBucketTokenCapacty;
+            _refillInterval = TimeSpan.FromSeconds(1);
+            _refillIntervalTicks = TimeSpan.FromSeconds(1).Ticks;
             _getUtcNow = getUtcNow ?? SystemClock.GetUtcNow;
         }
 
@@ -61,6 +63,11 @@
         public int Capacity
         {
             get { return _getBucketTokenCapacty(); }
+        }
+
+        public double Rate
+        {
+            get { return Capacity/_refillInterval.TotalSeconds; }
         }
 
         public IDisposable RegisterRequest()

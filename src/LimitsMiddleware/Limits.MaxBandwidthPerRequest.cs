@@ -26,27 +26,27 @@
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="getMaxBitsPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">getMaxBytesToWrite</exception>
-        public static MidFunc MaxBandwidthPerRequest(Func<int> getMaxBitsPerSecond)
+        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
+        public static MidFunc MaxBandwidthPerRequest(Func<int> getMaxBytesPerSecond)
         {
-            getMaxBitsPerSecond.MustNotNull("getMaxBytesToWrite");
+            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
 
-            return MaxBandwidthPerRequest(_ => getMaxBitsPerSecond());
+            return MaxBandwidthPerRequest(_ => getMaxBytesPerSecond());
         }
 
         /// <summary>
         /// Limits the bandwith used by the subsequent stages in the owin pipeline.
         /// </summary>
-        /// <param name="getMaxBytesToWrite">A delegate to retrieve the maximum number of bytes per second to be transferred.
+        /// <param name="getMaxBytesPerSecond">A delegate to retrieve the maximum number of bytes per second to be transferred.
         /// Allows you to supply different values at runtime. Use 0 or a negative number to specify infinite bandwidth.</param>
         /// <returns>An OWIN middleware delegate.</returns>
-        /// <exception cref="System.ArgumentNullException">getMaxBytesToWrite</exception>
-        public static MidFunc MaxBandwidthPerRequest(Func<RequestContext, int> getMaxBytesToWrite)
+        /// <exception cref="System.ArgumentNullException">getMaxBytesPerSecond</exception>
+        public static MidFunc MaxBandwidthPerRequest(Func<RequestContext, int> getMaxBytesPerSecond)
         {
-            getMaxBytesToWrite.MustNotNull("getMaxBytesToWrite");
+            getMaxBytesPerSecond.MustNotNull("getMaxBytesPerSecond");
 
             return
                 next =>
@@ -59,9 +59,9 @@
                     var limitsRequestContext = new RequestContext(context.Request);
 
                     var requestTokenBucket = new FixedTokenBucket(
-                        () => getMaxBytesToWrite(limitsRequestContext));
+                        () => getMaxBytesPerSecond(limitsRequestContext));
                     var responseTokenBucket = new FixedTokenBucket(
-                        () => getMaxBytesToWrite(limitsRequestContext));
+                        () => getMaxBytesPerSecond(limitsRequestContext));
 
                     using (requestTokenBucket.RegisterRequest())
                     using (responseTokenBucket.RegisterRequest())

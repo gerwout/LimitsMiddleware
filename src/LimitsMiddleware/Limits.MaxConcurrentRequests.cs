@@ -64,8 +64,7 @@
                     try
                     {
                         int concurrentRequests = Interlocked.Increment(ref concurrentRequestCounter);
-                        logger.Debug("Concurrent counter incremented to {0}. Limit is {1}."
-                            .FormatWith(concurrentRequests, maxConcurrentRequests));
+                        logger.Debug("Concurrent request {0}/{1}.".FormatWith(concurrentRequests, maxConcurrentRequests));
                         if (concurrentRequests > maxConcurrentRequests)
                         {
                             logger.Info("Limit ({0}). Request rejected."
@@ -80,7 +79,8 @@
                     }
                     finally
                     {
-                        Interlocked.Decrement(ref concurrentRequestCounter);
+                        int concurrentRequests = Interlocked.Decrement(ref concurrentRequestCounter);
+                        logger.Debug("Concurrent request {0}/{1}.".FormatWith(concurrentRequests, maxConcurrentRequests));
                     }
                 };
         }
