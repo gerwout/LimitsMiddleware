@@ -81,6 +81,7 @@
     <Compile Include="..\SharedAssemblyInfo.cs">
       <Link>Properties\SharedAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="TaskTimerTests.cs" />
     <Compile Include="ConnectionTimeoutTests.cs" />
     <Compile Include="MaxBandwidthGlobalTests.cs" />
     <Compile Include="MaxConcurrentRequestsTests.cs" />

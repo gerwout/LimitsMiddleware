@@ -5,29 +5,24 @@
     using System.Threading;
     using System.Threading.Tasks;
     using LimitsMiddleware.Logging;
-    using Timer = System.Timers.Timer;
 
     internal class TimeoutStream : Stream
     {
         private readonly Stream _innerStream;
         private readonly TimeSpan _timeout;
-        private readonly Timer _timer;
         private static readonly ILog Logger = LogProvider.GetCurrentClassLogger();
+        private readonly Timer _timer;
 
         public TimeoutStream(Stream innerStream, TimeSpan timeout)
         {
             _innerStream = innerStream;
             _timeout = timeout;
-            _timer = new Timer(_timeout.TotalMilliseconds)
-            {
-                AutoReset = false
-            };
-            _timer.Elapsed += (sender, args) =>
+
+            _timer = new Timer(_timeout, () =>
             {
                 Logger.Info("Timeout of {0} reached.".FormatWith(_timeout));
-                Close();
-            };
-            _timer.Start();
+                base.Dispose();
+            });
         }
 
         public override bool CanRead
@@ -81,10 +76,14 @@
             _innerStream.Write(buffer, offset, count);
         }
 
-        public override void Close()
+        protected override void Dispose(bool disposing)
         {
-            _timer.Dispose();
-            _innerStream.Close();
+            if(disposing)
+            {
+                _timer.Dispose();
+                _innerStream.Dispose();
+            }
+            base.Dispose(disposing);
         }
 
         public override Task CopyToAsync(Stream destination, int bufferSize, CancellationToken cancellationToken)
@@ -112,9 +111,7 @@
 
         private void Reset()
         {
-            _timer.Stop();
-            Logger.Debug("Timeout timer reseted.");
-            _timer.Start();
+            _timer.Reset();
         }
     }
 }

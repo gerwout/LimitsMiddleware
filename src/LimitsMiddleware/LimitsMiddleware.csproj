@@ -69,6 +69,7 @@
     <Compile Include="StringExtension.cs" />
     <Compile Include="ThrottledStream.cs" />
     <Compile Include="TimeoutStream.cs" />
+    <Compile Include="Timer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="LimitsMiddleware.nuspec" />
