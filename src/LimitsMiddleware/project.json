@@ -10,6 +10,10 @@
   },
 
   "frameworks": {
+    "net451": { },
+    "dnx451": {
+      "compileFiles": ["../SharedAssemblyInfo.cs"]
+    },
     "dnxcore50": {
       "compilationOptions": {
         "define": [ "DNXCORE50", "LIBLOG_PORTABLE" ]
@@ -28,7 +32,8 @@
         "System.Text.RegularExpressions": "4.0.10-beta-22816",
         "System.Threading": "4.0.10-beta-22816",
         "Microsoft.CSharp": "4.0.0-beta-22816"
-      }
+      },
+      "compileFiles": [ "../SharedAssemblyInfo.cs" ]
     }
   }
 }
