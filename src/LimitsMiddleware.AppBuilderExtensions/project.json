@@ -10,7 +10,7 @@
   "dependencies": {
     "LimitsMiddleware": "3.0.0-*",
     "Microsoft.AspNet.Hosting.Interfaces": "1.0.0-beta4",
-    "Microsoft.AspNet.Owin": "1.0.0-beta5-11475"
+    "Microsoft.AspNet.Owin": "1.0.0-beta4"
   },
   "compilationOptions": { "define": ["ASPNET5"]},
   "frameworks": {
