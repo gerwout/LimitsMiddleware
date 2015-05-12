@@ -19,9 +19,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware", "LimitsM
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.Tests", "LimitsMiddleware.Tests\LimitsMiddleware.Tests.csproj", "{2C2D78F6-27ED-4777-9E1A-476F9816E344}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.OwinAppBuilder", "LimitsMiddleware.OwinAppBuilder\LimitsMiddleware.OwinAppBuilder.csproj", "{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.OwinAppBuilder", "LimitsMiddleware.AppBuilderExtensions\LimitsMiddleware.OwinAppBuilder.csproj", "{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}"
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "LimitsMiddleware.AspNet5", "LimitsMiddleware.OwinAppBuilder\LimitsMiddleware.AspNet5.xproj", "{34E25F65-E60F-4431-9D2F-892B92241442}"
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "LimitsMiddleware.AspNet5", "LimitsMiddleware.AppBuilderExtensions\LimitsMiddleware.AspNet5.xproj", "{34E25F65-E60F-4431-9D2F-892B92241442}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.Demo", "LimitsMiddleware.Demo\LimitsMiddleware.Demo.csproj", "{45FBDCB1-452D-4254-B617-91A6EEC2F1BD}"
 EndProject

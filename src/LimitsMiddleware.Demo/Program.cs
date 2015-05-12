@@ -9,7 +9,6 @@
     using Nowin;
     using Owin;
     using Serilog;
-    using Serilog.Events;
 
     internal class Program
     {
