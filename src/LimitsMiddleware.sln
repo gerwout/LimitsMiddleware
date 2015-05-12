@@ -13,8 +13,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".nuget", ".nuget", "{444E84
 		.nuget\packages.config = .nuget\packages.config
 	EndProjectSection
 EndProject
-Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "LimitsMiddleware.AspNet5", "LimitsMiddleware.AspNet5\LimitsMiddleware.AspNet5.xproj", "{34E25F65-E60F-4431-9D2F-892B92241442}"
-EndProject
 Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "LimitsMiddleware.Dnx", "LimitsMiddleware\LimitsMiddleware.Dnx.xproj", "{AEEA893C-3FC4-4279-A00E-AF47B262F6E3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware", "LimitsMiddleware\LimitsMiddleware.csproj", "{757A5ABF-F560-416D-8494-C7A2C6F8E1EF}"
@@ -23,16 +21,16 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.Tests", "L
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.OwinAppBuilder", "LimitsMiddleware.OwinAppBuilder\LimitsMiddleware.OwinAppBuilder.csproj", "{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}"
 EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "LimitsMiddleware.AspNet5", "LimitsMiddleware.OwinAppBuilder\LimitsMiddleware.AspNet5.xproj", "{34E25F65-E60F-4431-9D2F-892B92241442}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LimitsMiddleware.Demo", "LimitsMiddleware.Demo\LimitsMiddleware.Demo.csproj", "{45FBDCB1-452D-4254-B617-91A6EEC2F1BD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{34E25F65-E60F-4431-9D2F-892B92241442}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{34E25F65-E60F-4431-9D2F-892B92241442}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{34E25F65-E60F-4431-9D2F-892B92241442}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{34E25F65-E60F-4431-9D2F-892B92241442}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AEEA893C-3FC4-4279-A00E-AF47B262F6E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AEEA893C-3FC4-4279-A00E-AF47B262F6E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AEEA893C-3FC4-4279-A00E-AF47B262F6E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -49,6 +47,14 @@ Global
 		{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{833BC4E3-7BC7-4FC8-AC68-6FE8B9B127B7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{34E25F65-E60F-4431-9D2F-892B92241442}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{34E25F65-E60F-4431-9D2F-892B92241442}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{34E25F65-E60F-4431-9D2F-892B92241442}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{34E25F65-E60F-4431-9D2F-892B92241442}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45FBDCB1-452D-4254-B617-91A6EEC2F1BD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45FBDCB1-452D-4254-B617-91A6EEC2F1BD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45FBDCB1-452D-4254-B617-91A6EEC2F1BD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45FBDCB1-452D-4254-B617-91A6EEC2F1BD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

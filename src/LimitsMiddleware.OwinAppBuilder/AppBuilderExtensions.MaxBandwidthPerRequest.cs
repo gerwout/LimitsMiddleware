@@ -1,12 +1,15 @@
-﻿namespace Owin
+﻿#if ASPNET5
+namespace Microsoft.AspNet.Builder
+#else
+namespace Owin
+#endif
 {
     using System;
     using LimitsMiddleware;
-    using AppFunc = System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>;
-    using MidFunc = System.Func<
-        System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>,
-        System.Func<System.Collections.Generic.IDictionary<string, object>, System.Threading.Tasks.Task>
-        >;
+
+#if ASPNET5
+    using IAppBuilder = Microsoft.AspNet.Builder.IApplicationBuilder;
+#endif
 
     public static partial class AppBuilderExtensions
     {

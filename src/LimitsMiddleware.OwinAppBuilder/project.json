@@ -11,7 +11,7 @@
     "Microsoft.AspNet.Hosting.Interfaces": "1.0.0-beta4",
     "Microsoft.AspNet.Owin": "1.0.0-beta5-11475"
   },
-
+  "compilationOptions": { "define": ["ASPNET5"]},
   "frameworks": {
     "dnx451": {
       "dependencies": { }
