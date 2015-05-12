@@ -1,0 +1,54 @@
+﻿<!DOCTYPE html>
+<html>
+<body>
+
+    <h1>Limits Middleware Demo</h1>
+
+<h2>Rate Limiting</h2>
+<p>Tweak some values and click 'download' (once or multiple times concurrently) to experience a file with limits applied to it.</p>
+    <ul>
+        <li>
+            Max global bandwidth is set at 10MBps. Download several large files concurrently to see the limit applied;
+            the more concurrent requests, the more each request is limited.
+        </li>
+        <li>
+            Max number of concurrent requests is 4.
+        </li>
+        <li>
+            This is best experienced with Firefox with FasterFox Lite and DownThemAll addons. Some browsers my limit number
+            of concurrent requests.
+        </li>
+    </ul>
+<form action="file" method="GET">
+    <h4>File size:</h4>
+    <input type="radio" name="size" value="1000">1 KB
+    <input type="radio" name="size" value="10000">10 KB
+    <input type="radio" name="size" value="100000">100 KB
+    <input type="radio" name="size" value="1000000" checked>1 MB
+    <input type="radio" name="size" value="10000000">10 MB
+    <input type="radio" name="size" value="100000000">100 MB
+
+    <h4>Max Bandwidth per Request:</h4>
+    <input type="radio" name="maxbandwidthperrequest" value="20000">20KBps
+    <input type="radio" name="maxbandwidthperrequest" value="100000" checked>100KBps
+    <input type="radio" name="maxbandwidthperrequest" value="1000000">1MBps
+    <input type="radio" name="maxbandwidthperrequest" value="-1">none
+
+    <h4>Min response delay:</h4>
+    <input type="radio" name="minresponsedelay" value="0">0s
+    <input type="radio" name="minresponsedelay" value="1" checked>1s
+    <input type="radio" name="minresponsedelay" value="5">2s
+    <input type="radio" name="minresponsedelay" value="10">10s
+
+    <p><input type="submit" value="Download">
+    </p>
+</form>
+    <h2>Max Url Length</h2>
+    <p>
+        Currently set to 100. <a href="/0123456789-0123456789-0123456789-0123456789-0123456789?q=0123456789-0123456789-0123456789-0123456789-0123456789-">Try me!</a>
+    </p>
+<h2>Max Query String Length</h2>
+<p>Currently set to 80. <a href="/file?q=0123456789-0123456789-0123456789-0123456789-0123456789-0123456789-0123456789-">Try me!</a>
+</p>
+</body>
+</html>

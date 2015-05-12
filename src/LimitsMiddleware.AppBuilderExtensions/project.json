@@ -1,13 +1,14 @@
 ﻿{
-  "version": "1.0.0-*",
+  "version": "3.0.0",
   "description": "",
-  "authors": [ "" ],
+  "owners": ["Damian Hickey"],
+  "authors": [ "Damian Hickey" ],
   "tags": [ "" ],
-  "projectUrl": "",
-  "licenseUrl": "",
-
+  "projectUrl": "https://github.com/damianh/LimitsMiddleware",
+  "licenseUrl": "https://github.com/damianh/LimitsMiddleware/blob/master/LICENSE",
+  "title" : "Limits Middleware Owin AppBuilder Integration",
   "dependencies": {
-    "LimitsMiddleware": "",
+    "LimitsMiddleware": "3.0.0-*",
     "Microsoft.AspNet.Hosting.Interfaces": "1.0.0-beta4",
     "Microsoft.AspNet.Owin": "1.0.0-beta5-11475"
   },

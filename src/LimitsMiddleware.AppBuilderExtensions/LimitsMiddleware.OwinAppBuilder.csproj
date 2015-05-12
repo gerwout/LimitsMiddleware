@@ -16,20 +16,20 @@
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
+    <OutputPath>bin\Debug\LimitsMiddleware.OwinAppBuilder\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Debug\LimitsMiddleware.OwinAppBuilder.xml</DocumentationFile>
+    <DocumentationFile>bin\Debug\LimitsMiddleware.OwinAppBuilder\LimitsMiddleware.OwinAppBuilder.xml</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
+    <OutputPath>bin\Release\LimitsMiddleware.OwinAppBuilder\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>bin\Release\LimitsMiddleware.OwinAppBuilder.xml</DocumentationFile>
+    <DocumentationFile>bin\Release\LimitsMiddleware.OwinAppBuilder\LimitsMiddleware.OwinAppBuilder.xml</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Owin">

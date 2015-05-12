@@ -8,7 +8,7 @@
         <projectUrl>https://github.com/damianh/LimitsMiddleware</projectUrl>
         <licenseUrl>https://github.com/damianh/LimitsMiddleware/blob/master/LICENSE</licenseUrl>
         <requireLicenseAcceptance>false</requireLicenseAcceptance>
-        <title>Limits Middleware AppBuilder Integration</title>
+        <title>Limits Middleware Owin AppBuilder Integration</title>
         <description>
             Integration package for the Limits middleware for users of IAppBuilder.
         </description>
