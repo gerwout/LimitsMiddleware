@@ -5,6 +5,7 @@
     using System.IO;
     using Microsoft.AspNet.Builder;
     using Microsoft.AspNet.Http;
+    using Microsoft.AspNet.WebUtilities;
     using Microsoft.Framework.DependencyInjection;
 
     public class Startup
@@ -23,20 +24,28 @@
 
             app.MinResponseDelay(context =>
             {
-                var queryString = ParseQueryString(QueryString.FromUriComponent(context.Uri).Value);
-                var minResponseDelayParam = queryString.Get("minresponsedelay");
+                var queryStringDictionary = QueryHelpers.ParseQuery(QueryString.FromUriComponent(context.Uri).Value);
+                string[] values;
+                if(!queryStringDictionary.TryGetValue("minresponsedelay", out values))
+                {
+                    return TimeSpan.Zero;
+                }
                 int minResponseDelay;
-                return int.TryParse(minResponseDelayParam, out minResponseDelay)
+                return int.TryParse(values[0], out minResponseDelay)
                     ? TimeSpan.FromSeconds(minResponseDelay)
                     : TimeSpan.Zero;
             });
 
             app.MaxBandwidthPerRequest(context =>
             {
-                var queryString = ParseQueryString(QueryString.FromUriComponent(context.Uri).Value);
-                var maxBandwidthParam = queryString.Get("maxbandwidthperrequest");
+                var queryStringDictionary = QueryHelpers.ParseQuery(QueryString.FromUriComponent(context.Uri).Value);
+                string[] values;
+                if (!queryStringDictionary.TryGetValue("maxbandwidthperrequest", out values))
+                {
+                    return -1;
+                }
                 int maxBandwidth;
-                return int.TryParse(maxBandwidthParam, out maxBandwidth)
+                return int.TryParse(values[0], out maxBandwidth)
                     ? maxBandwidth
                     : -1;
             });
@@ -66,25 +75,10 @@
                 {
                     var length = Math.Min(buffer.Length, size - count);
                     await context.Response.Body.WriteAsync(buffer, 0, length, context.RequestAborted);
+                    await context.Response.Body.FlushAsync();
                     count += length;
                 }
             });
-        }
-
-        // There is no HttpUtility.ParseQueryString yet in AspNet5. Doing this as a lame interm thing.
-        private static NameValueCollection ParseQueryString(string queryString)
-        {
-            var result = new NameValueCollection();
-            var pairs = queryString.Split('&');
-            foreach(var pair in pairs)
-            {
-                var nameAndValue = pair.Split('=');
-                if(nameAndValue.Length == 2)
-                {
-                    result.Add(nameAndValue[0], nameAndValue[1]);
-                }
-            }
-            return result;
         }
     }
 }
