@@ -13,6 +13,7 @@ OWIN middleware to apply limits to an OWIN pipeline:
  - Max query string
  - Max request content length
  - Max url length
+ - Min response delay
  
 #### Installation
 
@@ -44,6 +45,7 @@ public class Startup
             .MaxQueryStringLength(15) //Unescaped QueryString
             .MaxRequestContentLength(15)
             .MaxUrlLength(20)
+            .MinResponseDelay(200ms)
             .UseEtc(..);
             
         //dynamic settings
@@ -64,11 +66,4 @@ Questions or suggestions? Create an issue or [@randompunter] on twitter.
 #### Help
 
 Bugs? Create an issue. Questions [@randompunter](https://twitter.com/randompunter) or [OWIN room on Jabbr](https://jabbr.net/#/rooms/owin)
-
-##### Developed with:
-
-[![Resharper](http://neventstore.org/images/logo_resharper_small.gif)](http://www.jetbrains.com/resharper/)
-[![TeamCity](http://neventstore.org/images/logo_teamcity_small.gif)](http://www.jetbrains.com/teamcity/)
-[![dotCover](http://neventstore.org/images/logo_dotcover_small.gif)](http://www.jetbrains.com/dotcover/)
-[![dotTrace](http://neventstore.org/images/logo_dottrace_small.gif)](http://www.jetbrains.com/dottrace/)
 
