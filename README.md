@@ -37,7 +37,7 @@ public class Startup
     public void Configuration(IAppBuilder builder)
     {
         //static settings
-        builder.Use()
+        builder
             .MaxBandwidth(10000) //bps
             .MaxConcurrentRequests(10)
             .ConnectionTimeout(TimeSpan.FromSeconds(10))
@@ -47,7 +47,7 @@ public class Startup
             .UseEtc(..);
             
         //dynamic settings
-        builder.Use()
+        builder
             .MaxBandwidth(() => 10000) //bps
             .MaxConcurrentRequests(() => 10)
             .ConnectionTimeout(() => TimeSpan.FromSeconds(10))
